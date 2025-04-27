@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_SERVER=db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=bizbrain
+      - POSTGRES_PORT=5432
+    depends_on:
+      - db
+    networks:
+      - bizbrain-network
+
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=bizbrain
+    ports:
+      - "5432:5432"
+    networks:
+      - bizbrain-network
+
+volumes:
+  postgres_data:
+
+networks:
+  bizbrain-network:
+    driver: bridge 
