@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
-from .api import agents, auth
+from .api import agents, auth, workflows
 from .core.database import engine, Base
 
 # 创建数据库表
@@ -33,6 +33,7 @@ def root():
 # Include routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
 app.include_router(agents.router, prefix=f"{settings.API_V1_STR}/agents", tags=["agents"])
+app.include_router(workflows.router, prefix=f"{settings.API_V1_STR}/workflows", tags=["workflows"])
 
 # 导入路由
 # from app.api import workflows, knowledge_base

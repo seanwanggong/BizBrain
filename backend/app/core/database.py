@@ -1,18 +1,22 @@
+from sqlalchemy.orm import declarative_base
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
-from dotenv import load_dotenv
+from ..core.config import settings
 
-load_dotenv()
+# 创建引擎
+engine = create_engine(
+    settings.DATABASE_URL,
+    echo=settings.DEBUG,
+    connect_args={"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
+)
 
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/bizbrain")
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+# 创建会话工厂
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# 创建基类
 Base = declarative_base()
 
+# 获取数据库会话的依赖函数
 def get_db():
     db = SessionLocal()
     try:
