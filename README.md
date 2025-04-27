@@ -31,7 +31,7 @@ BizBrain 是一个开源的AI Agent协作平台，旨在帮助企业实现智能
 
 1. 克隆仓库
 ```bash
-git clone https://github.com/yourusername/bizbrain.git
+git clone https://github.com/seanwanggong/bizbrain.git
 cd bizbrain
 ```
 

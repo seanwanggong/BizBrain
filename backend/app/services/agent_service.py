@@ -5,6 +5,8 @@ from ..schemas.agent import AgentCreate, AgentUpdate
 from langchain.agents import AgentExecutor
 from langchain.chat_models import ChatOpenAI
 from langchain.tools import Tool
+from langchain.agents import initialize_agent
+from langchain.agents import AgentType
 import json
 
 class AgentService:
@@ -62,9 +64,10 @@ class AgentService:
         tools = self._create_tools(agent)
         
         # 创建Agent执行器
-        agent_executor = AgentExecutor.from_agent_and_tools(
-            agent=llm,
+        agent_executor = initialize_agent(
             tools=tools,
+            llm=llm,
+            agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
             verbose=True
         )
         
@@ -73,6 +76,32 @@ class AgentService:
     def _create_tools(self, agent: Agent) -> List[Tool]:
         """根据agent配置创建工具集"""
         tools = []
-        # 这里可以根据agent.type和config来创建不同的工具
-        # 例如：搜索工具、计算工具、数据库查询工具等
+        
+        # 添加计算工具
+        def calculate(expression: str) -> str:
+            try:
+                return str(eval(expression))
+            except Exception as e:
+                return f"Error: {str(e)}"
+        
+        tools.append(
+            Tool(
+                name="Calculator",
+                func=calculate,
+                description="Useful for when you need to answer questions about math. Input should be a mathematical expression."
+            )
+        )
+        
+        # 添加搜索工具（示例）
+        def search(query: str) -> str:
+            return f"Searching for: {query}"
+        
+        tools.append(
+            Tool(
+                name="Search",
+                func=search,
+                description="Useful for when you need to search for information."
+            )
+        )
+        
         return tools 
