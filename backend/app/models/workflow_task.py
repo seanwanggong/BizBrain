@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from ..core.database import Base
 import enum
+from datetime import datetime
 
 
 class TaskType(str, enum.Enum):
@@ -59,4 +60,5 @@ class WorkflowTask(Base):
         primaryjoin="WorkflowTask.id==task_dependencies.c.task_id",
         secondaryjoin="WorkflowTask.id==task_dependencies.c.dependency_id",
         backref="dependents"
-    ) 
+    )
+    logs = relationship("TaskLog", back_populates="task") 

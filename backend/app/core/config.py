@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 import secrets
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseModel):
@@ -34,6 +35,14 @@ class Settings(BaseModel):
     POSTGRES_PASSWORD: str = Field(default="postgres")
     POSTGRES_DB: str = Field(default="bizbrain")
     SQLALCHEMY_DATABASE_URL: str = Field(default="sqlite:///./bizbrain.db")
+
+    # API Settings
+    DESCRIPTION: str = "BizBrain AI Agent collaboration platform API"
+    
+    # Documentation Settings
+    DOCS_URL: str = "/docs"
+    REDOC_URL: str = "/redoc"
+    OPENAPI_URL: str = "/openapi.json"
 
     @property
     def get_database_url(self) -> str:

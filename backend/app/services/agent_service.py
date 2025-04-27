@@ -15,6 +15,13 @@ import requests
 import os
 import sqlite3
 from openai import OpenAI
+import pandas as pd
+import numpy as np
+from bs4 import BeautifulSoup
+import re
+import base64
+import io
+import matplotlib.pyplot as plt
 
 class AgentService:
     def __init__(self, db: Session):
@@ -156,15 +163,109 @@ class AgentService:
             )
         )
         
-        # 添加搜索工具
-        def search(query: str) -> str:
-            return f"Searching for: {query}"
+        # 添加数据分析工具
+        def analyze_data(data: str) -> str:
+            try:
+                df = pd.read_json(data)
+                summary = df.describe().to_dict()
+                return json.dumps(summary)
+            except Exception as e:
+                return f"Error analyzing data: {str(e)}"
         
         tools.append(
             Tool(
-                name="Search",
-                func=search,
-                description="Useful for when you need to search for information."
+                name="AnalyzeData",
+                func=analyze_data,
+                description="Useful for analyzing data. Input should be a JSON string containing the data to analyze."
+            )
+        )
+
+        # 添加数据可视化工具
+        def visualize_data(data: str, chart_type: str = "line") -> str:
+            try:
+                df = pd.read_json(data)
+                plt.figure(figsize=(10, 6))
+                
+                if chart_type == "line":
+                    df.plot.line()
+                elif chart_type == "bar":
+                    df.plot.bar()
+                elif chart_type == "scatter":
+                    df.plot.scatter(x=df.columns[0], y=df.columns[1])
+                elif chart_type == "hist":
+                    df.hist()
+                
+                plt.title("Data Visualization")
+                plt.tight_layout()
+                
+                # 将图表保存为base64编码的图片
+                buf = io.BytesIO()
+                plt.savefig(buf, format='png')
+                buf.seek(0)
+                img_str = base64.b64encode(buf.read()).decode('utf-8')
+                plt.close()
+                
+                return f"data:image/png;base64,{img_str}"
+            except Exception as e:
+                return f"Error visualizing data: {str(e)}"
+        
+        tools.append(
+            Tool(
+                name="VisualizeData",
+                func=visualize_data,
+                description="Useful for creating data visualizations. Input should be a JSON string with 'data' and 'chart_type' (optional) keys."
+            )
+        )
+
+        # 添加文本处理工具
+        def process_text(text: str, operation: str) -> str:
+            try:
+                if operation == "tokenize":
+                    return json.dumps(text.split())
+                elif operation == "clean":
+                    return re.sub(r'[^\w\s]', '', text)
+                elif operation == "lowercase":
+                    return text.lower()
+                elif operation == "uppercase":
+                    return text.upper()
+                else:
+                    return f"Unknown operation: {operation}"
+            except Exception as e:
+                return f"Error processing text: {str(e)}"
+        
+        tools.append(
+            Tool(
+                name="ProcessText",
+                func=process_text,
+                description="Useful for text processing operations. Input should be a JSON string with 'text' and 'operation' keys."
+            )
+        )
+
+        # 添加网页抓取工具
+        def scrape_webpage(url: str) -> str:
+            try:
+                response = requests.get(url)
+                soup = BeautifulSoup(response.text, 'html.parser')
+                
+                # 提取标题
+                title = soup.title.string if soup.title else "No title found"
+                
+                # 提取正文
+                paragraphs = [p.get_text() for p in soup.find_all('p')]
+                content = '\n'.join(paragraphs)
+                
+                return json.dumps({
+                    "title": title,
+                    "content": content
+                })
+            except Exception as e:
+                return f"Error scraping webpage: {str(e)}"
+        
+        tools.append(
+            Tool(
+                name="ScrapeWebpage",
+                func=scrape_webpage,
+                description="Useful for scraping content from webpages. Input should be a URL string."
             )
         )
 
@@ -263,12 +364,12 @@ class AgentService:
             Tool(
                 name="GetCurrentTime",
                 func=get_current_time,
-                description="Useful for getting the current time in ISO format."
+                description="Useful for getting the current time."
             ),
             Tool(
                 name="FormatTime",
                 func=format_time,
-                description="Useful for formatting a timestamp. Input should be a JSON string with 'timestamp' and 'format' keys."
+                description="Useful for formatting timestamps. Input should be a JSON string with 'timestamp' and 'format_str' keys."
             )
         ])
         

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from .api.v1.api import api_router
 from .core.config import settings
-from .api import agents, auth, workflows
 from .core.database import engine, Base
 
 # 创建数据库表
@@ -9,31 +9,37 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
+    description=settings.DESCRIPTION,
     version=settings.VERSION,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    docs_url=settings.DOCS_URL,
+    redoc_url=settings.REDOC_URL,
+    openapi_url=settings.OPENAPI_URL,
 )
 
-# Set all CORS enabled origins
+# 配置CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # 在生产环境中应该限制为特定域名
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# 注册API路由
+app.include_router(api_router, prefix=settings.API_V1_STR)
+
 @app.get("/")
-def root():
-    return {
-        "message": "Welcome to BizBrain API",
-        "version": settings.VERSION,
-        "docs_url": "/docs"
-    }
+async def root():
+    return {"message": f"Welcome to {settings.PROJECT_NAME} API"}
 
 # Include routers
+from .api.v1.endpoints import auth, agents, workflows, tasks, executions
+
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
 app.include_router(agents.router, prefix=f"{settings.API_V1_STR}/agents", tags=["agents"])
 app.include_router(workflows.router, prefix=f"{settings.API_V1_STR}/workflows", tags=["workflows"])
+app.include_router(tasks.router, prefix=f"{settings.API_V1_STR}/tasks", tags=["tasks"])
+app.include_router(executions.router, prefix=f"{settings.API_V1_STR}/executions", tags=["executions"])
 
 # 导入路由
 # from app.api import workflows, knowledge_base

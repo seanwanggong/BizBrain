@@ -18,17 +18,10 @@ from ...services.workflow_engine import WorkflowEngine
 router = APIRouter()
 
 
-@router.post("/", response_model=WorkflowResponse)
-async def create_workflow(
-    workflow: WorkflowCreate,
-    db: Session = Depends(get_db)
-):
-    """创建工作流"""
-    db_workflow = Workflow(
-        name=workflow.name,
-        description=workflow.description,
-        config=workflow.config
-    )
+@router.post("/", response_model=WorkflowResponse, status_code=status.HTTP_201_CREATED)
+def create_workflow(workflow: WorkflowCreate, db: Session = Depends(get_db)):
+    """Create a new workflow."""
+    db_workflow = Workflow(**workflow.dict())
     db.add(db_workflow)
     db.commit()
     db.refresh(db_workflow)
@@ -36,46 +29,39 @@ async def create_workflow(
 
 
 @router.get("/", response_model=List[WorkflowResponse])
-async def list_workflows(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db)
-):
-    """获取工作流列表"""
+def list_workflows(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """List all workflows."""
     workflows = db.query(Workflow).offset(skip).limit(limit).all()
     return workflows
 
 
 @router.get("/{workflow_id}", response_model=WorkflowResponse)
-async def get_workflow(
-    workflow_id: int,
-    db: Session = Depends(get_db)
-):
-    """获取工作流详情"""
+def get_workflow(workflow_id: int, db: Session = Depends(get_db)):
+    """Get a specific workflow by ID."""
     workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
     if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Workflow not found"
+            detail=f"Workflow with ID {workflow_id} not found"
         )
     return workflow
 
 
 @router.put("/{workflow_id}", response_model=WorkflowResponse)
-async def update_workflow(
+def update_workflow(
     workflow_id: int,
-    workflow: WorkflowUpdate,
+    workflow_update: WorkflowUpdate,
     db: Session = Depends(get_db)
 ):
-    """更新工作流"""
+    """Update a workflow."""
     db_workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
     if not db_workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Workflow not found"
+            detail=f"Workflow with ID {workflow_id} not found"
         )
     
-    for field, value in workflow.dict(exclude_unset=True).items():
+    for field, value in workflow_update.dict(exclude_unset=True).items():
         setattr(db_workflow, field, value)
     
     db.commit()
@@ -83,22 +69,19 @@ async def update_workflow(
     return db_workflow
 
 
-@router.delete("/{workflow_id}")
-async def delete_workflow(
-    workflow_id: int,
-    db: Session = Depends(get_db)
-):
-    """删除工作流"""
+@router.delete("/{workflow_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_workflow(workflow_id: int, db: Session = Depends(get_db)):
+    """Delete a workflow."""
     workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
     if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Workflow not found"
+            detail=f"Workflow with ID {workflow_id} not found"
         )
     
     db.delete(workflow)
     db.commit()
-    return {"message": "Workflow deleted successfully"}
+    return None
 
 
 @router.post("/{workflow_id}/tasks", response_model=WorkflowTaskResponse)
