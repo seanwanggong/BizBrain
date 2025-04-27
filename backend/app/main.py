@@ -1,18 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api import agents
+from .core.config import settings
+from .api import agents, auth
 from .core.database import engine, Base
 
 # 创建数据库表
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="BizBrain API",
-    description="AI Agent协作平台API",
-    version="0.1.0"
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# 配置CORS
+# Set all CORS enabled origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,11 +23,16 @@ app.add_middleware(
 )
 
 @app.get("/")
-async def root():
-    return {"message": "Welcome to BizBrain API"}
+def root():
+    return {
+        "message": "Welcome to BizBrain API",
+        "version": settings.VERSION,
+        "docs_url": "/docs"
+    }
 
-# 注册路由
-app.include_router(agents.router, prefix="/api/v1/agents", tags=["agents"])
+# Include routers
+app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
+app.include_router(agents.router, prefix=f"{settings.API_V1_STR}/agents", tags=["agents"])
 
 # 导入路由
 # from app.api import workflows, knowledge_base

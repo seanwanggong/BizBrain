@@ -1,29 +1,38 @@
-FROM python:3.9-slim-bullseye
+# Use Python 3.11 slim image as base
+FROM python:3.11-slim as builder
 
+# Set working directory
 WORKDIR /app
 
-# 安装系统依赖
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
-# 复制依赖文件
-COPY requirements.txt .
+# Copy requirements files
+COPY requirements.txt requirements-dev.txt ./
 
-# 安装Python依赖
-RUN pip install -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com --no-cache-dir --timeout 1000 --retries 10 -r requirements.txt
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# 复制应用代码
+# Final stage
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Set Python path
+ENV PYTHONPATH=/app
+
+# Copy only the necessary files from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy application code
 COPY . .
 
-# 暴露端口
+# Expose port
 EXPOSE 8000
 
-# 使用非root用户运行
-RUN useradd -m appuser && chown -R appuser:appuser /app
-USER appuser
-
-# 启动命令
+# Run the application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"] 
