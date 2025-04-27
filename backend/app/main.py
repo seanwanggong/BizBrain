@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api.v1.api import api_router
-from .core.config import settings
+from app.core.config import settings
+from app.api.v1.api import api_router
 from .core.database import engine, Base
 
 # 创建数据库表
@@ -9,24 +9,24 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description=settings.DESCRIPTION,
     version=settings.VERSION,
+    description=settings.DESCRIPTION,
     docs_url=settings.DOCS_URL,
     redoc_url=settings.REDOC_URL,
     openapi_url=settings.OPENAPI_URL,
 )
 
-# 配置CORS
+# Set up CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 在生产环境中应该限制为特定域名
+    allow_origins=["*"],  # Allows all origins
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
 )
 
-# 注册API路由
-app.include_router(api_router, prefix=settings.API_V1_STR)
+# Include API router
+app.include_router(api_router)
 
 @app.get("/")
 async def root():

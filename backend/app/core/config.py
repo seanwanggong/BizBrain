@@ -13,11 +13,11 @@ class Settings(BaseModel):
     )
     
     # 数据库配置
-    DATABASE_URL: str = Field(default="sqlite:///./test.db")
+    DATABASE_URL: str = Field(default="sqlite:///./app.db")
     DEBUG: bool = Field(default=True)
     
     # OpenAI配置
-    OPENAI_API_KEY: str = Field(default="sk-test-key")
+    OPENAI_API_KEY: str = Field(default="your-api-key")
     OPENAI_API_BASE: Optional[str] = Field(default=None)
     OPENAI_API_VERSION: Optional[str] = Field(default=None)
     OPENAI_API_TYPE: Optional[str] = Field(default=None)
@@ -28,7 +28,7 @@ class Settings(BaseModel):
     
     SECRET_KEY: str = Field(default_factory=lambda: secrets.token_urlsafe(32))
     ALGORITHM: str = Field(default="HS256")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=60 * 24 * 8)  # 8 days
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30)
     
     POSTGRES_SERVER: str = Field(default="db")
     POSTGRES_USER: str = Field(default="postgres")

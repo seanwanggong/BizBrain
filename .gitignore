@@ -1,3 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+.python-version
 .env
-.idea
-__pycache__
+venv/
+
+# TypeScript
+frontend/node_modules/
+dist/
+*.tsbuildinfo
+.eslintcache
+.next
