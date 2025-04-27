@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 
 class AgentBase(BaseModel):
@@ -25,4 +25,13 @@ class AgentInDB(AgentBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        from_attributes = True 
+        from_attributes = True
+
+class AgentExecuteRequest(BaseModel):
+    input: str
+    context: Optional[Dict[str, Any]] = None
+
+class AgentExecuteResponse(BaseModel):
+    output: str
+    steps: List[Dict[str, Any]]
+    execution_time: float 

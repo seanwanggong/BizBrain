@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from ..schemas.agent import AgentCreate, AgentUpdate, AgentInDB
+from ..schemas.agent import AgentCreate, AgentUpdate, AgentInDB, AgentExecuteRequest, AgentExecuteResponse
 from ..services.agent_service import AgentService
 from ..core.database import get_db
+import time
 
 router = APIRouter()
 
@@ -39,4 +40,19 @@ def delete_agent(agent_id: int, db: Session = Depends(get_db)):
     success = service.delete_agent(agent_id)
     if not success:
         raise HTTPException(status_code=404, detail="Agent not found")
-    return {"message": "Agent deleted successfully"} 
+    return {"message": "Agent deleted successfully"}
+
+@router.post("/{agent_id}/execute", response_model=AgentExecuteResponse)
+def execute_agent(agent_id: int, request: AgentExecuteRequest, db: Session = Depends(get_db)):
+    service = AgentService(db)
+    try:
+        result = service.execute_agent(agent_id, request.input)
+        return AgentExecuteResponse(
+            output=result["output"],
+            steps=result["steps"],
+            execution_time=result["execution_time"]
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) 
