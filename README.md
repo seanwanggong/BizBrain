@@ -74,6 +74,6 @@ npm run dev
 
 ## 联系方式
 
-- 项目维护者：[Your Name]
-- 邮箱：[Your Email]
-- GitHub：[Your GitHub Profile] 
+- 项目维护者：seanwanggong
+- 邮箱：
+- GitHub：https://github.com/seanwanggong
