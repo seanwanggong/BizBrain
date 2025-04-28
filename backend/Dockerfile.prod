@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
 # Set environment variables
-ARG ENVIRONMENT=development
+ARG ENVIRONMENT=production
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     POETRY_VERSION=1.7.1 \
@@ -19,9 +19,6 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         curl \
         build-essential \
-        git \
-        libpq-dev \
-        python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry
@@ -31,16 +28,19 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 WORKDIR $PYSETUP_PATH
 
 # Copy project files
-COPY pyproject.toml ./
+COPY pyproject.toml poetry.lock ./
 
 # Install dependencies
-RUN poetry install --no-root
+RUN poetry install --no-root --no-dev
 
 # Copy the rest of the project
 COPY . .
 
 # Install the project
-RUN poetry install
+RUN poetry install --no-dev
 
-# Set the command based on environment
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"] 
+# Expose port
+EXPOSE 8000
+
+# Set the command
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"] 

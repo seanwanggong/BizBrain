@@ -1,72 +1,47 @@
 import React from 'react';
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
-import { ConfigProvider } from 'antd';
-import 'antd/dist/reset.css';
+import { ConfigProvider, Layout } from 'antd';
+import 'antd/dist/antd.min.css';
 import '@/styles/globals.css';
-import AppLayout from '@/components/Layout';
+import AppHeader from '@/components/Header';
 import { useRouter } from 'next/router';
+import 'reactflow/dist/style.css';
+import '@/styles/reactflow-overrides.css';
 
-const publicPaths = ['/', '/login', '/register'];
+const { Content, Footer } = Layout;
 
-function MyApp({ Component, pageProps }: AppProps) {
+export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
-  const isPublicPath = publicPaths.includes(router.pathname);
-
-  // Check authentication
-  React.useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token && !isPublicPath) {
-      router.push('/login');
-    }
-  }, [router.pathname]);
+  const isPublicPage = ['/login', '/register', '/'].includes(router.pathname);
 
   return (
     <>
       <Head>
+        <title>BizBrain - AI Agent协作平台</title>
+        <meta name="description" content="BizBrain - 企业级AI Agent协作平台" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
       </Head>
-      <ConfigProvider
-        theme={{
-          token: {
-            colorPrimary: '#1890ff',
-            colorSuccess: '#52c41a',
-            colorWarning: '#faad14',
-            colorError: '#f5222d',
-            colorInfo: '#1890ff',
-            borderRadius: 6,
-            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-          },
-          components: {
-            Button: {
-              borderRadius: 6,
-            },
-            Card: {
-              borderRadius: 12,
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            },
-            Table: {
-              borderRadius: 12,
-            },
-            Input: {
-              borderRadius: 6,
-            },
-            Select: {
-              borderRadius: 6,
-            },
-          },
-        }}
-      >
-        {isPublicPath ? (
-          <Component {...pageProps} />
-        ) : (
-          <AppLayout>
+      <ConfigProvider>
+        <Layout>
+          <AppHeader />
+          <Content style={{ 
+            minHeight: 'calc(100vh - 64px - 70px)',
+            paddingTop: 64
+          }}>
             <Component {...pageProps} />
-          </AppLayout>
-        )}
+          </Content>
+          <Footer style={{ 
+            textAlign: 'center',
+            background: '#f5f5f5',
+            padding: '24px 50px',
+            height: 70
+          }}>
+            BizBrain ©{new Date().getFullYear()} - AI Agent协作平台
+          </Footer>
+        </Layout>
       </ConfigProvider>
     </>
   );
-}
-
-export default MyApp; 
+} 

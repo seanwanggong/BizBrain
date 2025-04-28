@@ -1,5 +1,5 @@
 import React from 'react';
-import { Typography, Row, Col, Card, Button, Space, Divider } from 'antd';
+import { Typography, Row, Col, Card, Button, Space } from 'antd';
 import {
   RobotOutlined,
   ApiOutlined,
@@ -11,12 +11,13 @@ import {
 } from '@ant-design/icons';
 import Link from 'next/link';
 import styles from '@/styles/Home.module.css';
-import Image from 'next/image';
-import PublicLayout from '@/components/PublicLayout';
+import { useRouter } from 'next/router';
 
 const { Title, Paragraph } = Typography;
 
 const HomePage = () => {
+  const router = useRouter();
+
   const features = [
     {
       icon: <RobotOutlined className={styles.featureIcon} />,
@@ -57,7 +58,7 @@ const HomePage = () => {
   ];
 
   return (
-    <PublicLayout>
+    <>
       {/* Hero Section */}
       <div className={styles.hero}>
         <div className={styles.heroBackground}>
@@ -66,9 +67,6 @@ const HomePage = () => {
         </div>
         <Row justify="center" align="middle" className={styles.heroContent}>
           <Col xs={24} md={16} lg={12}>
-            <div className={styles.heroLogo}>
-              <Image src="/logo.png" alt="BizBrain Logo" width={80} height={80} />
-            </div>
             <Title level={1} className={styles.title}>
               BizBrain
             </Title>
@@ -76,20 +74,15 @@ const HomePage = () => {
               AI Agent协作平台
             </Title>
             <Paragraph className={styles.description}>
-              释放AI的潜力，实现企业智能自动化。BizBrain帮助您构建、管理和协调AI Agents，
-              打造智能、高效的工作流程。
+              为企业提供智能化的AI Agent协作解决方案，提升工作效率，降低运营成本。
             </Paragraph>
             <Space size="large" className={styles.heroButtons}>
-              <Link href="/register">
-                <Button type="primary" size="large" className={styles.primaryButton}>
-                  免费开始使用 <ArrowRightOutlined />
-                </Button>
-              </Link>
-              <Link href="/docs">
-                <Button size="large" className={styles.secondaryButton}>
-                  查看文档
-                </Button>
-              </Link>
+              <Button type="primary" size="large" className={styles.primaryButton}>
+                立即开始
+              </Button>
+              <Button size="large" className={styles.secondaryButton}>
+                了解更多
+              </Button>
             </Space>
           </Col>
         </Row>
@@ -138,11 +131,9 @@ const HomePage = () => {
               立即注册 BizBrain，体验 AI 为企业带来的革命性变化。
             </Paragraph>
             <Space size="large" className={styles.ctaButtons}>
-              <Link href="/register">
-                <Button type="primary" size="large" className={styles.primaryButton}>
-                  免费注册 <ArrowRightOutlined />
-                </Button>
-              </Link>
+              <Button type="primary" size="large" className={styles.primaryButton}>
+                免费注册
+              </Button>
               <Link href="/contact">
                 <Button size="large" className={styles.secondaryButton}>
                   联系我们
@@ -152,7 +143,7 @@ const HomePage = () => {
           </Col>
         </Row>
       </div>
-    </PublicLayout>
+    </>
   );
 };
 

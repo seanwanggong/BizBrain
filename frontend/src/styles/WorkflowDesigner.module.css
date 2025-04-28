@@ -1,0 +1,254 @@
+.container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 240px;
+  border-right: 1px solid #eaeaea;
+  padding: 16px;
+  overflow-y: auto;
+  background: #fafafa;
+  z-index: 1;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+.sidebarHeader {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.nodeCategory {
+  margin-bottom: 16px;
+}
+
+.categoryTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.nodeTypeItem {
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border: 1px solid #eaeaea;
+  border-radius: 6px;
+  cursor: grab;
+  transition: all 0.2s;
+  background: white;
+  user-select: none;
+}
+
+.nodeTypeItem:hover {
+  border-color: #e5e7eb;
+  background: #f9fafb;
+  transform: translateY(-1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.nodeTypeItem:active {
+  cursor: grabbing;
+}
+
+.nodeTypeLabel {
+  font-weight: 500;
+  font-size: 13px;
+  margin-bottom: 2px;
+  color: #111827;
+}
+
+.nodeTypeDescription {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.designer {
+  flex: 1;
+  position: relative;
+  height: 100%;
+  background: #fafafa;
+  background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+  background-size: 24px 24px;
+  overflow: hidden;
+}
+
+/* Node Styles */
+.customNode {
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  width: 120px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+.startNode {
+  composes: customNode;
+  background: white;
+  border-color: #3b82f6;
+  border-width: 1px;
+}
+
+.endNode {
+  composes: customNode;
+  background: white;
+  border-color: #ef4444;
+  border-width: 1px;
+}
+
+.conditionNode {
+  composes: customNode;
+  background: white;
+  border-color: #10b981;
+  border-width: 1px;
+}
+
+.customNode:hover,
+.startNode:hover,
+.endNode:hover,
+.conditionNode:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.nodeContent {
+  position: relative;
+}
+
+.nodeLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 1px;
+}
+
+.nodeDescription {
+  font-size: 10px;
+  color: #6b7280;
+  line-height: 1.2;
+}
+
+.flowHandle {
+  width: 8px !important;
+  height: 8px !important;
+  min-width: 8px !important;
+  min-height: 8px !important;
+  background: #6b7280 !important;
+  border: 2px solid white !important;
+  border-radius: 50% !important;
+  cursor: crosshair !important;
+  transition: all 0.2s !important;
+}
+
+.flowHandle:hover {
+  width: 10px !important;
+  height: 10px !important;
+  min-width: 10px !important;
+  min-height: 10px !important;
+  background: #3b82f6 !important;
+  transform: scale(1.2) !important;
+  cursor: grab !important;
+}
+
+/* 添加连接点的交互区域 */
+.flowHandle::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+}
+
+/* 设置连接线端点的样式 */
+.container :global(.react-flow__edge-path) {
+  cursor: pointer;
+  stroke-width: 2 !important;
+}
+
+.container :global(.react-flow__edge.selected) .flowHandle {
+  width: 10px !important;
+  height: 10px !important;
+  min-width: 10px !important;
+  min-height: 10px !important;
+  background: #3b82f6 !important;
+  cursor: grab !important;
+}
+
+.container :global(.react-flow__edge.selected) .flowHandle:hover {
+  cursor: grabbing !important;
+}
+
+.container :global(.react-flow__handle-connecting) {
+  background: #3b82f6 !important;
+}
+
+.container :global(.react-flow__handle-valid) {
+  background: #10b981 !important;
+}
+
+.helpPanel {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  margin: 12px;
+  min-width: 180px;
+  z-index: 5;
+  border: 1px solid #eaeaea;
+}
+
+.helpContent h4 {
+  margin: 0 0 8px;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.helpContent ul {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.helpContent li {
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+/* Edge Styles */
+.container :global(.react-flow__edge-path) {
+  stroke: #9ca3af !important;
+  stroke-width: 1.5 !important;
+  stroke-dasharray: 5,5 !important;
+}
+
+.container :global(.react-flow__edge.selected .react-flow__edge-path) {
+  stroke: #3b82f6 !important;
+  stroke-dasharray: none !important;
+}
+
+.container :global(.react-flow__node.selected) {
+  box-shadow: 0 0 0 2px #3b82f6 !important;
+}
+
+.flowWrapper {
+  width: 100%;
+  height: 100%;
+} 

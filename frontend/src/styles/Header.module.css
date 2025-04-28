@@ -1,0 +1,14 @@
+.menuItem {
+  background: transparent !important;
+  color: #000 !important;
+}
+
+.menuItem:hover {
+  background: transparent !important;
+  color: #1890ff !important;
+}
+
+.menuItemSelected {
+  background: transparent !important;
+  color: #000 !important;
+} 

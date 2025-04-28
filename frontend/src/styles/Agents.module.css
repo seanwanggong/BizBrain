@@ -1,0 +1,173 @@
+.container {
+  min-width: 1200px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+}
+
+.description {
+  color: #666;
+  font-size: 16px;
+  margin-top: 8px;
+  max-width: 600px;
+}
+
+.tabs {
+  margin-bottom: 24px;
+}
+
+.tabs :global(.ant-tabs-nav) {
+  margin-bottom: 24px;
+}
+
+.tabs :global(.ant-tabs-content) {
+  min-width: 100%;
+}
+
+.tabs :global(.ant-tabs-tabpane) {
+  min-width: 100%;
+}
+
+.tabs :global(.ant-tabs-tabpane-active) {
+  display: block;
+  width: 100%;
+}
+
+.tabs :global(.ant-row) {
+  width: 100%;
+  margin: 0 !important;
+}
+
+.tabs :global(.ant-col) {
+  padding: 12px !important;
+  flex: 0 0 33.33% !important;
+  max-width: 33.33% !important;
+}
+
+.card {
+  height: 100%;
+  transition: all 0.3s;
+  width: 100%;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.cardDescription {
+  color: #666;
+  margin: 12px 0;
+  height: 44px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.tags {
+  margin-bottom: 16px;
+}
+
+.tags :global(.ant-tag) {
+  margin-bottom: 8px;
+}
+
+.abilities {
+  margin-bottom: 16px;
+}
+
+.abilitiesTitle {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.abilities :global(.ant-tag) {
+  margin-right: 8px;
+  margin-bottom: 8px;
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+  width: 100%;
+}
+
+.cardMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #666;
+  font-size: 14px;
+}
+
+.cardActions {
+  display: flex;
+  gap: 8px;
+}
+
+.createOptions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.createOption {
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.createOption:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.createIcon {
+  font-size: 24px;
+  color: #1890ff;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 1200px) {
+  .container {
+    min-width: 1200px;
+    padding: 24px 16px;
+  }
+
+  .tabs :global(.ant-col) {
+    flex: 0 0 50% !important;
+    max-width: 50% !important;
+  }
+}
+
+@media (max-width: 800px) {
+  .container {
+    min-width: 1200px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .createOptions {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs :global(.ant-col) {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+} 

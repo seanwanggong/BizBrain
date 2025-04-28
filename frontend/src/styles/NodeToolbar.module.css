@@ -1,0 +1,42 @@
+.toolbar {
+  width: 240px;
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e8e8e8;
+}
+
+.title {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.nodeList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nodeItem {
+  cursor: move;
+  transition: all 0.3s;
+  border: 1px solid #e8e8e8;
+}
+
+.nodeItem:hover {
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.nodeIcon {
+  font-size: 24px;
+  color: #1890ff;
+  margin-bottom: 8px;
+}
+
+.nodeDescription {
+  font-size: 12px;
+  color: #666;
+  display: block;
+  margin-top: 4px;
+} 

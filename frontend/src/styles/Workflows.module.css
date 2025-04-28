@@ -1,0 +1,317 @@
+.container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f0f2f5;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.emptyWrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  min-height: calc(100vh - 140px);
+}
+
+.emptyWrapper :global(.ant-empty) {
+  margin: 32px 0;
+}
+
+.emptyWrapper :global(.ant-empty-description) {
+  color: #999;
+  font-size: 14px;
+}
+
+.form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.formHeader {
+  width: 100%;
+}
+
+.designerWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  min-height: calc(100vh - 140px);
+}
+
+.designerWrapper :global(.ant-form-item) {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.designerWrapper :global(.ant-form-item-control) {
+  flex: 1;
+}
+
+.designerWrapper :global(.ant-form-item-control-input) {
+  height: 100%;
+}
+
+.designerWrapper :global(.ant-form-item-control-input-content) {
+  height: 100%;
+}
+
+.description {
+  color: #666;
+  font-size: 16px;
+  margin-top: 8px;
+  display: block;
+}
+
+.tabs {
+  margin-bottom: 24px;
+}
+
+.tabs :global(.ant-tabs-nav) {
+  margin-bottom: 24px;
+}
+
+.tabs :global(.ant-tabs-content) {
+  min-width: 100%;
+}
+
+.tabs :global(.ant-tabs-tabpane) {
+  min-width: 100%;
+}
+
+.tabs :global(.ant-tabs-tabpane-active) {
+  display: block;
+  width: 100%;
+}
+
+.tabs :global(.ant-row) {
+  width: 100%;
+  margin: 0 !important;
+}
+
+.tabs :global(.ant-col) {
+  padding: 12px !important;
+  flex: 0 0 33.33% !important;
+  max-width: 33.33% !important;
+}
+
+.workflowCard {
+  height: 100%;
+  transition: all 0.3s ease;
+  border: 1px solid #f0f0f0;
+}
+
+.workflowCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.cardDescription {
+  color: #666;
+  margin: 12px 0;
+  display: block;
+  min-height: 48px;
+}
+
+.cardFooter {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.cardMeta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  color: #666;
+}
+
+.cardActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.createOptions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.createOption {
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.createOption:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.createIcon {
+  font-size: 24px;
+  color: #1890ff;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 1200px) {
+  .container {
+    min-width: 1200px;
+    padding: 24px 16px;
+  }
+
+  .tabs :global(.ant-col) {
+    flex: 0 0 50% !important;
+    max-width: 50% !important;
+  }
+}
+
+@media (max-width: 800px) {
+  .container {
+    min-width: 1200px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .createOptions {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs :global(.ant-col) {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+.designContainer {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f0f2f5;
+  padding: 24px;
+  min-width: 1200px;
+  z-index: 1001;
+}
+
+.designHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 0 24px;
+  background: #fff;
+  height: 64px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.designTitle {
+  display: flex;
+  flex-direction: column;
+  max-width: 60%;
+}
+
+.designTitle h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #262626;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.designDescription {
+  font-size: 14px;
+  color: #8c8c8c;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.designContent {
+  flex: 1;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+  display: flex;
+  height: calc(100vh - 136px);
+}
+
+.designHeader :global(.ant-btn) {
+  height: 36px;
+  padding: 0 20px;
+  font-size: 14px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.designHeader :global(.ant-btn-primary) {
+  background: #1677ff;
+  border-color: #1677ff;
+  box-shadow: 0 2px 0 rgba(5, 145, 255, 0.1);
+}
+
+.designHeader :global(.ant-btn-primary:hover) {
+  background: #4096ff;
+  border-color: #4096ff;
+}
+
+.designHeader :global(.ant-btn:not(.ant-btn-primary)) {
+  border-color: #d9d9d9;
+  color: #595959;
+}
+
+.designHeader :global(.ant-btn:not(.ant-btn-primary):hover) {
+  color: #4096ff;
+  border-color: #4096ff;
+}
+
+.designHeader :global(.ant-space) {
+  gap: 12px !important;
+} 

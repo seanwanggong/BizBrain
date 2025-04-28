@@ -7,8 +7,12 @@
 /* Hero Section */
 .hero {
   position: relative;
-  padding: 120px 24px;
-  text-align: center;
+  min-height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 80px 50px;
   overflow: hidden;
 }
 
@@ -18,7 +22,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 0;
+  z-index: -1;
 }
 
 .heroGradient {
@@ -36,50 +40,110 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231890ff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.1;
 }
 
 .heroContent {
-  position: relative;
-  max-width: 1200px;
+  text-align: center;
+  width: 100%;
   margin: 0 auto;
-  z-index: 1;
+  padding: 40px 20px;
+  transform: translateY(0);
+  transition: all 0.3s ease;
+}
+
+.heroContent:hover {
+  transform: translateY(-5px);
 }
 
 .heroLogo {
   margin-bottom: 24px;
-  animation: floatAnimation 3s ease-in-out infinite;
+  background-image: url('/banner.svg');
+  background-size: cover;
+  background-position: center;
+  width: 100vw;
+  height: 400px;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
 }
 
 .title {
-  font-size: 64px !important;
-  font-weight: 800 !important;
+  font-size: 56px !important;
+  font-weight: 700 !important;
   margin-bottom: 16px !important;
   background: linear-gradient(135deg, #1890ff 0%, #722ed1 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: fadeInUp 0.6s ease-out;
+  letter-spacing: -0.5px;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .subtitle {
-  font-size: 36px !important;
-  color: #262626;
+  font-size: 28px !important;
+  font-weight: 500 !important;
   margin-bottom: 24px !important;
-  animation: fadeInUp 0.6s ease-out 0.2s backwards;
+  color: #262626;
+  opacity: 0.9;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .description {
   font-size: 20px;
-  color: #595959;
-  margin-bottom: 48px !important;
-  max-width: 800px;
-  margin: 0 auto;
   line-height: 1.8;
-  animation: fadeInUp 0.6s ease-out 0.4s backwards;
+  color: #595959;
+  margin-bottom: 40px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .heroButtons {
-  animation: fadeInUp 0.6s ease-out 0.6s backwards;
+  margin-top: 40px;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.primaryButton {
+  background: linear-gradient(135deg, #1890ff 0%, #722ed1 100%);
+  border: none;
+  height: 48px;
+  padding: 0 32px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 24px;
+  transition: all 0.3s ease;
+}
+
+.primaryButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(24, 144, 255, 0.3);
+}
+
+.secondaryButton {
+  background: transparent;
+  border: 2px solid #1890ff;
+  color: #1890ff;
+  height: 48px;
+  padding: 0 32px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 24px;
+  transition: all 0.3s ease;
+}
+
+.secondaryButton:hover {
+  background: #e6f7ff;
+  color: #1890ff;
+  border-color: #1890ff;
+  transform: translateY(-2px);
 }
 
 /* Features Section */
@@ -213,30 +277,6 @@
   color: #595959;
   margin-bottom: 48px !important;
   line-height: 1.8;
-}
-
-.primaryButton {
-  height: 48px !important;
-  padding: 0 32px !important;
-  font-size: 16px !important;
-  font-weight: 500 !important;
-  border-radius: 24px !important;
-  box-shadow: 0 8px 16px rgba(24, 144, 255, 0.2);
-  transition: all 0.3s ease !important;
-}
-
-.primaryButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 20px rgba(24, 144, 255, 0.3);
-}
-
-.secondaryButton {
-  height: 48px !important;
-  padding: 0 32px !important;
-  font-size: 16px !important;
-  font-weight: 500 !important;
-  border-radius: 24px !important;
-  transition: all 0.3s ease !important;
 }
 
 /* Animations */

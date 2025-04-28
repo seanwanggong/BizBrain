@@ -1,0 +1,18 @@
+.react-flow__handle {
+  width: 8px;
+  height: 8px;
+  background: #1890ff;
+  border: 2px solid white;
+}
+
+.react-flow__handle:hover {
+  background: #40a9ff;
+}
+
+.react-flow__background {
+  gap: 20px;
+}
+
+.react-flow__node {
+  width: auto !important;
+} 
