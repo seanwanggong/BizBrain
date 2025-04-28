@@ -17,7 +17,7 @@ class WorkflowExecution(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     workflow_id = Column(Integer, ForeignKey("workflows.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
     status = Column(Enum(ExecutionStatus), default=ExecutionStatus.PENDING, nullable=False)
     input_data = Column(JSON, nullable=True)
     result = Column(JSON, nullable=True)
@@ -30,4 +30,5 @@ class WorkflowExecution(Base):
     # 关系
     workflow = relationship("Workflow", back_populates="executions")
     user = relationship("User", back_populates="workflow_executions")
-    task_logs = relationship("TaskLog", back_populates="execution") 
+    task_logs = relationship("TaskLog", back_populates="execution")
+    execution_logs = relationship("ExecutionLog", back_populates="execution") 

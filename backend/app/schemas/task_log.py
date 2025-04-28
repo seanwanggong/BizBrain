@@ -1,7 +1,8 @@
+from typing import Optional, Dict, Any
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, Dict, Any
 from ..models.workflow_task import TaskStatus
+
 
 class TaskLogBase(BaseModel):
     """任务日志基础模型"""
@@ -12,9 +13,11 @@ class TaskLogBase(BaseModel):
     result: Optional[Dict[str, Any]] = None
     error_message: Optional[str] = None
 
+
 class TaskLogCreate(TaskLogBase):
-    """创建任务日志模型"""
+    """创建任务日志请求模型"""
     pass
+
 
 class TaskLogResponse(TaskLogBase):
     """任务日志响应模型"""

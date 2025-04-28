@@ -9,7 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@ant-design/icons": "^5.0.1",
+    "@ant-design/charts": "^2.2.7",
+    "@ant-design/icons": "^5.6.1",
     "@types/react-router-dom": "^5.3.3",
     "@vitejs/plugin-react": "^4.4.1",
     "antd": "^4.24.15",
@@ -20,8 +21,10 @@
     "rc-util": "5.30.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.5.2",
     "reactflow": "^11.11.4",
+    "recharts": "^2.15.3",
     "vite": "^6.3.3"
   },
   "devDependencies": {

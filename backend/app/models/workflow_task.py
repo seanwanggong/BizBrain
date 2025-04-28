@@ -61,4 +61,4 @@ class WorkflowTask(Base):
         secondaryjoin="WorkflowTask.id==task_dependencies.c.dependency_id",
         backref="dependents"
     )
-    logs = relationship("TaskLog", back_populates="task") 
+    task_logs = relationship("TaskLog", back_populates="task") 

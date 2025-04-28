@@ -19,5 +19,5 @@ class TaskLog(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # 关系
-    task = relationship("WorkflowTask", back_populates="logs")
+    task = relationship("WorkflowTask", back_populates="task_logs")
     execution = relationship("WorkflowExecution", back_populates="task_logs") 

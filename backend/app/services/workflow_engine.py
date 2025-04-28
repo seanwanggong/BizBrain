@@ -1,6 +1,7 @@
 from typing import Dict, Any, List
 from sqlalchemy.orm import Session
-from ..models.workflow import Workflow, WorkflowExecution
+from ..models.workflow import Workflow
+from ..models.workflow_execution import WorkflowExecution, ExecutionStatus
 from ..models.workflow_task import WorkflowTask, TaskType, TaskStatus
 from ..schemas.workflow import WorkflowCreate, WorkflowUpdate
 from ..core.database import SessionLocal
@@ -10,6 +11,7 @@ from .task_executors import get_task_executor
 import asyncio
 import json
 from datetime import datetime
+import logging
 
 
 class WorkflowEngine:

@@ -1,46 +1,27 @@
 FROM python:3.11-slim
 
-# Set environment variables
-ARG ENVIRONMENT=development
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    POETRY_VERSION=1.7.1 \
-    POETRY_HOME="/opt/poetry" \
-    POETRY_VIRTUALENVS_IN_PROJECT=true \
-    POETRY_NO_INTERACTION=1 \
-    PYSETUP_PATH="/opt/pysetup" \
-    VENV_PATH="/opt/pysetup/.venv"
+WORKDIR /app
 
-# Add Poetry to PATH
-ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
-
-# Install system dependencies
+# 安装系统依赖
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        curl \
-        build-essential \
-        git \
-        libpq-dev \
-        python3-dev \
+    curl \
+    gcc \
+    python3-dev \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
-RUN curl -sSL https://install.python-poetry.org | python3 -
+# 复制依赖文件
+COPY requirements.txt .
 
-# Set working directory
-WORKDIR $PYSETUP_PATH
+# 安装 Python 依赖
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
-COPY pyproject.toml ./
-
-# Install dependencies
-RUN poetry install --no-root
-
-# Copy the rest of the project
+# 复制应用代码
 COPY . .
 
-# Install the project
-RUN poetry install
+# 暴露端口
+EXPOSE 8000
 
-# Set the command based on environment
+# 启动命令
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"] 

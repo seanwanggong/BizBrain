@@ -8,12 +8,15 @@ import AppHeader from '@/components/Header';
 import { useRouter } from 'next/router';
 import 'reactflow/dist/style.css';
 import '@/styles/reactflow-overrides.css';
+import zhCN from 'antd/locale/zh_CN';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const { Content, Footer } = Layout;
 
-export default function App({ Component, pageProps }: AppProps) {
-  const router = useRouter();
-  const isPublicPage = ['/login', '/register', '/'].includes(router.pathname);
+const publicPaths = ['/login', '/register'];
+
+export default function App({ Component, pageProps, router }: AppProps) {
+  const isPublicPath = publicPaths.includes(router.pathname);
 
   return (
     <>
@@ -23,14 +26,27 @@ export default function App({ Component, pageProps }: AppProps) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <ConfigProvider>
+      <ConfigProvider
+        locale={zhCN}
+        theme={{
+          token: {
+            colorPrimary: '#1890ff',
+          },
+        }}
+      >
         <Layout>
           <AppHeader />
           <Content style={{ 
             minHeight: 'calc(100vh - 64px - 70px)',
             paddingTop: 64
           }}>
-            <Component {...pageProps} />
+            {isPublicPath ? (
+              <Component {...pageProps} />
+            ) : (
+              <ProtectedRoute>
+                <Component {...pageProps} />
+              </ProtectedRoute>
+            )}
           </Content>
           <Footer style={{ 
             textAlign: 'center',

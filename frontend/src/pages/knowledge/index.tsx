@@ -1,168 +1,194 @@
 import React, { useState } from 'react';
-import { Button, Card, Col, Modal, Row, Tabs, Tag, Typography } from 'antd';
-import { PlusOutlined, FileTextOutlined, AppstoreOutlined, StarOutlined } from '@ant-design/icons';
-import styles from '@/styles/Knowledge.module.css';
+import { Card, Button, Space, Table, Tag, Typography, Modal, message, Input, Upload } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, FileOutlined, UploadOutlined, SearchOutlined } from '@ant-design/icons';
+import { useRouter } from 'next/router';
+import KnowledgeBaseForm from '@/components/KnowledgeBaseForm';
+import { KnowledgeBase } from '@/types/knowledge';
+import styles from './index.module.css';
+import DashboardLayout from '@/components/layouts/DashboardLayout';
 
-const { Title, Text } = Typography;
-const { TabPane } = Tabs;
+const { Title } = Typography;
+const { Search } = Input;
 
-// Mock data for templates
-const templates = [
-  {
-    id: 1,
-    name: '客户服务知识库',
-    description: '包含常见问题解答、产品使用指南和故障排除步骤的完整知识库模板',
-    tags: ['客服', '产品支持', '常见问题'],
-    features: ['自动分类', '搜索优化', '多语言支持'],
-    usageCount: 2345,
-    rating: 4.8,
-  },
-  {
-    id: 2,
-    name: '产品文档库',
-    description: '适用于产品说明书、API文档和技术规范的专业文档库模板',
-    tags: ['产品文档', '技术文档', 'API'],
-    features: ['版本控制', '代码高亮', '在线预览'],
-    usageCount: 1890,
-    rating: 4.7,
-  },
-  {
-    id: 3,
-    name: '培训资料库',
-    description: '整合企业培训材料、课程内容和学习资源的知识库模板',
-    tags: ['培训', '学习', '教育'],
-    features: ['课程管理', '进度跟踪', '考核系统'],
-    usageCount: 1567,
-    rating: 4.6,
-  },
-];
+const KnowledgePage = () => {
+  const router = useRouter();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedKnowledgeBase, setSelectedKnowledgeBase] = useState<KnowledgeBase | null>(null);
+  const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([
+    {
+      id: '1',
+      name: '产品文档',
+      description: '包含所有产品相关的文档和说明',
+      createdAt: '2024-03-20',
+      updatedAt: '2024-03-20',
+      documents: [],
+    },
+    {
+      id: '2',
+      name: '技术文档',
+      description: '技术架构和开发文档',
+      createdAt: '2024-03-19',
+      updatedAt: '2024-03-19',
+      documents: [],
+    },
+  ]);
+  const [searchText, setSearchText] = useState('');
 
-// Mock data for user knowledge bases
-const userKnowledgeBases = [
-  {
-    id: 1,
-    name: '产品使用手册',
-    description: '包含所有产品的详细使用说明和常见问题解答',
-    tags: ['产品文档', '使用手册'],
-    lastUpdated: '2024-03-20',
-    documentCount: 156,
-  },
-  {
-    id: 2,
-    name: '技术文档中心',
-    description: 'API文档、开发指南和技术规范的集中存储库',
-    tags: ['技术文档', 'API', '开发'],
-    lastUpdated: '2024-03-19',
-    documentCount: 89,
-  },
-];
+  const handleCreate = () => {
+    setSelectedKnowledgeBase(null);
+    setIsModalVisible(true);
+  };
 
-const KnowledgeBasePage: React.FC = () => {
-  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const handleEdit = (record: KnowledgeBase) => {
+    setSelectedKnowledgeBase(record);
+    setIsModalVisible(true);
+  };
 
-  const renderCard = (item: any, isTemplate: boolean) => (
-    <Col xs={24} sm={12} lg={8} key={item.id}>
-      <Card className={styles.card}>
-        <Title level={4}>{item.name}</Title>
-        <Text className={styles.cardDescription}>{item.description}</Text>
-        
-        <div className={styles.tags}>
-          {item.tags.map((tag: string) => (
-            <Tag key={tag}>{tag}</Tag>
-          ))}
-        </div>
+  const handleDelete = (record: KnowledgeBase) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除知识库 "${record.name}" 吗？`,
+      onOk: () => {
+        setKnowledgeBases(knowledgeBases.filter(kb => kb.id !== record.id));
+        message.success('知识库已删除');
+      },
+    });
+  };
 
-        {isTemplate ? (
-          <>
-            <div className={styles.features}>
-              <Text className={styles.featuresTitle}>主要功能</Text>
-              <ul>
-                {item.features.map((feature: string) => (
-                  <li key={feature}>{feature}</li>
-                ))}
-              </ul>
-            </div>
-            <div className={styles.cardFooter}>
-              <div className={styles.cardMeta}>
-                <Text><StarOutlined /> {item.rating} 分</Text>
-                <Text>{item.usageCount} 次使用</Text>
-              </div>
-              <div className={styles.cardActions}>
-                <Button type="primary">使用模板</Button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className={styles.cardFooter}>
-            <div className={styles.cardMeta}>
-              <Text>最后更新：{item.lastUpdated}</Text>
-              <Text>{item.documentCount} 个文档</Text>
-            </div>
-            <div className={styles.cardActions}>
-              <Button>查看详情</Button>
-              <Button type="primary">编辑</Button>
-            </div>
-          </div>
-        )}
-      </Card>
-    </Col>
-  );
+  const handleSubmit = (values: any) => {
+    if (selectedKnowledgeBase) {
+      // 更新现有知识库
+      setKnowledgeBases(knowledgeBases.map(kb => 
+        kb.id === selectedKnowledgeBase.id 
+          ? { ...kb, ...values, updatedAt: new Date().toISOString() }
+          : kb
+      ));
+      message.success('知识库已更新');
+    } else {
+      // 创建新知识库
+      const newKnowledgeBase: KnowledgeBase = {
+        id: Date.now().toString(),
+        ...values,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        documents: [],
+      };
+      setKnowledgeBases([...knowledgeBases, newKnowledgeBase]);
+      message.success('知识库已创建');
+    }
+    setIsModalVisible(false);
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchText(value);
+    // 实现搜索逻辑
+  };
+
+  const handleUpload = (info: any) => {
+    if (info.file.status === 'done') {
+      message.success(`${info.file.name} 上传成功`);
+    } else if (info.file.status === 'error') {
+      message.error(`${info.file.name} 上传失败`);
+    }
+  };
+
+  const columns = [
+    {
+      title: '名称',
+      dataIndex: 'name',
+      key: 'name',
+      render: (text: string, record: KnowledgeBase) => (
+        <a onClick={() => router.push(`/knowledge/${record.id}`)}>{text}</a>
+      ),
+    },
+    {
+      title: '描述',
+      dataIndex: 'description',
+      key: 'description',
+    },
+    {
+      title: '文档数量',
+      key: 'documents',
+      render: (record: KnowledgeBase) => (
+        <Tag color="blue">{record.documents.length}</Tag>
+      ),
+    },
+    {
+      title: '更新时间',
+      dataIndex: 'updatedAt',
+      key: 'updatedAt',
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (record: KnowledgeBase) => (
+        <Space size="middle">
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+          >
+            编辑
+          </Button>
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => handleDelete(record)}
+          >
+            删除
+          </Button>
+        </Space>
+      ),
+    },
+  ];
 
   return (
-    <div className={styles.container}>
-      <div className={styles.content}>
+    <DashboardLayout>
+      <div className={styles.container}>
         <div className={styles.header}>
-          <div>
-            <Title level={2}>知识库</Title>
-            <Text className={styles.description}>
-              创建和管理您的知识库，轻松组织和分享团队知识
-            </Text>
-          </div>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setCreateModalVisible(true)}
-          >
-            创建知识库
-          </Button>
+          <Title level={2}>知识库管理</Title>
+          <Space size="large">
+            <Search
+              placeholder="搜索知识库"
+              onSearch={handleSearch}
+              style={{ width: 300 }}
+            />
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleCreate}
+            >
+              创建知识库
+            </Button>
+          </Space>
         </div>
 
-        <Tabs className={styles.tabs}>
-          <TabPane tab="推荐模板" key="templates">
-            <Row gutter={[24, 24]}>
-              {templates.map(template => renderCard(template, true))}
-            </Row>
-          </TabPane>
-          <TabPane tab="我的知识库" key="my">
-            <Row gutter={[24, 24]}>
-              {userKnowledgeBases.map(kb => renderCard(kb, false))}
-            </Row>
-          </TabPane>
-        </Tabs>
+        <Card>
+          <Table
+            columns={columns}
+            dataSource={knowledgeBases}
+            rowKey="id"
+            pagination={false}
+          />
+        </Card>
 
         <Modal
-          title="创建知识库"
-          visible={createModalVisible}
-          onCancel={() => setCreateModalVisible(false)}
+          title={selectedKnowledgeBase ? '编辑知识库' : '创建知识库'}
+          open={isModalVisible}
+          onCancel={() => setIsModalVisible(false)}
           footer={null}
           width={600}
         >
-          <div className={styles.createOptions}>
-            <Card onClick={() => setCreateModalVisible(false)}>
-              <FileTextOutlined className={styles.createIcon} />
-              <Title level={4}>从零开始</Title>
-              <Text>创建一个全新的空白知识库，自定义所有内容和结构</Text>
-            </Card>
-            <Card onClick={() => setCreateModalVisible(false)}>
-              <AppstoreOutlined className={styles.createIcon} />
-              <Title level={4}>使用模板</Title>
-              <Text>从预设模板中选择，快速开始并根据需求调整</Text>
-            </Card>
-          </div>
+          <KnowledgeBaseForm
+            initialValues={selectedKnowledgeBase}
+            onSubmit={handleSubmit}
+            onCancel={() => setIsModalVisible(false)}
+          />
         </Modal>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 
-export default KnowledgeBasePage; 
+export default KnowledgePage; 

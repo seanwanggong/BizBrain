@@ -4,6 +4,7 @@
   display: flex;
   flex-direction: column;
   background-color: #f0f2f5;
+  padding: 24px;
 }
 
 .content {
@@ -11,21 +12,153 @@
   display: flex;
   flex-direction: column;
   padding: 24px;
-  margin: 0 auto;
   width: 100%;
-  max-width: 1200px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.description {
+  color: #6b7280;
+  font-size: 16px;
+  margin-bottom: 32px;
+  max-width: 800px;
+}
+
+.workflowOuterCard {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  padding: 32px 24px;
+  margin-top: 24px;
+}
+
+.workflowList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 32px;
+  margin-top: 0;
+}
+
+.workflowCard {
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  border: 1px solid #f0f0f0;
+  background: #fff;
+  padding: 32px 24px;
+  margin-bottom: 0;
+  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+}
+.workflowCard:hover {
+  box-shadow: 0 8px 24px rgba(24,144,255,0.10);
+  transform: translateY(-4px);
+  border-color: #1890ff;
+}
+
+.workflowItem {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.workflowItem:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #1890ff;
+}
+
+.itemIcon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f7ff;
+  border-radius: 8px;
+  margin-right: 16px;
+  color: #1890ff;
+  font-size: 24px;
+}
+
+.itemContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemDescription {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.itemMeta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.itemTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.tag {
+  padding: 2px 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  color: #4b5563;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.tag:hover {
+  background: #e5e7eb;
+}
+
+.itemActions {
+  display: flex;
+  gap: 12px;
+  margin-left: 16px;
 }
 
 .emptyWrapper {
@@ -33,19 +166,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
-  border-radius: 8px;
+  background: #fafafa;
+  border-radius: 12px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   min-height: calc(100vh - 140px);
+  border: 2px dashed #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.emptyWrapper:hover {
+  border-color: #1890ff;
+  background: #f0f7ff;
 }
 
 .emptyWrapper :global(.ant-empty) {
   margin: 32px 0;
+  padding: 24px;
 }
 
 .emptyWrapper :global(.ant-empty-description) {
-  color: #999;
-  font-size: 14px;
+  color: #6b7280;
+  font-size: 16px;
 }
 
 .form {
@@ -53,10 +194,16 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .formHeader {
   width: 100%;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .designerWrapper {
@@ -65,9 +212,15 @@
   flex-direction: column;
   background: #fff;
   padding: 24px;
-  border-radius: 8px;
+  border-radius: 12px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   min-height: calc(100vh - 140px);
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+}
+
+.designerWrapper:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .designerWrapper :global(.ant-form-item) {
@@ -85,13 +238,6 @@
 
 .designerWrapper :global(.ant-form-item-control-input-content) {
   height: 100%;
-}
-
-.description {
-  color: #666;
-  font-size: 16px;
-  margin-top: 8px;
-  display: block;
 }
 
 .tabs {
@@ -126,64 +272,105 @@
   max-width: 33.33% !important;
 }
 
-.workflowCard {
-  height: 100%;
-  transition: all 0.3s ease;
-  border: 1px solid #f0f0f0;
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
 }
 
-.workflowCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.cardIcon {
+  font-size: 24px;
+  color: #1890ff;
+  margin-bottom: 16px;
+}
+
+.cardTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 12px;
 }
 
 .cardDescription {
-  color: #666;
-  margin: 12px 0;
-  display: block;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 16px;
   min-height: 48px;
+}
+
+.tags {
+  margin: 16px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .cardFooter {
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .cardMeta {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  color: #666;
+  gap: 16px;
+  color: #6b7280;
+  font-size: 14px;
 }
 
 .cardActions {
   display: flex;
-  justify-content: flex-end;
   gap: 12px;
 }
 
 .createOptions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  padding: 16px 0;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  padding: 24px;
+  background: #fafafa;
+  border-radius: 12px;
+  margin-top: 32px;
 }
 
 .createOption {
   cursor: pointer;
   text-align: center;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
+  padding: 32px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
 }
 
 .createOption:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  border-color: #1890ff;
 }
 
 .createIcon {
-  font-size: 24px;
+  font-size: 32px;
   color: #1890ff;
   margin-bottom: 16px;
+}
+
+.createTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.createDescription {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 @media (max-width: 1200px) {
@@ -200,21 +387,60 @@
 
 @media (max-width: 800px) {
   .container {
-    min-width: 1200px;
+    padding: 16px;
+  }
+
+  .content {
+    padding: 16px;
   }
 
   .header {
     flex-direction: column;
     gap: 16px;
+    align-items: flex-start;
+  }
+
+  .workflowItem {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .itemIcon {
+    margin-bottom: 16px;
+  }
+
+  .itemActions {
+    margin-left: 0;
+    margin-top: 16px;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .cardGrid {
+    grid-template-columns: 1fr;
   }
 
   .createOptions {
     grid-template-columns: 1fr;
+    padding: 16px;
   }
 
   .tabs :global(.ant-col) {
     flex: 0 0 100% !important;
     max-width: 100% !important;
+  }
+
+  .workflowOuterCard {
+    padding: 16px;
+  }
+
+  .workflowList {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .workflowCard {
+    padding: 20px 12px;
   }
 }
 

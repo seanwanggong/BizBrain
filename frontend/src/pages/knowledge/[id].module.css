@@ -1,0 +1,13 @@
+.container {
+  padding: 24px;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.description {
+  color: rgba(0, 0, 0, 0.45);
+  margin-top: 8px;
+  margin-bottom: 0;
+} 

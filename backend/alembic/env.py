@@ -20,7 +20,9 @@ from app.models.agent import Base
 config = context.config
 
 # 设置数据库URL
-config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL"))
+database_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@db:5432/bizbrain")
+if database_url is not None:
+    config.set_main_option("sqlalchemy.url", str(database_url))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

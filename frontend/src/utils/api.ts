@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Agent, AgentCreate, AgentUpdate, AgentExecution } from '@/types/agent';
+import { User } from '@/types/user';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
@@ -24,8 +25,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      if (!window.location.pathname.includes('/login')) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -33,13 +36,34 @@ api.interceptors.response.use(
 
 // Auth API
 export const login = async (email: string, password: string) => {
-  const response = await api.post('/auth/login', { email, password });
-  return response.data;
+  try {
+    const formData = new URLSearchParams();
+    formData.append('username', email);
+    formData.append('password', password);
+    
+    const response = await api.post('/auth/login', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || '登录失败，请检查邮箱和密码');
+  }
 };
 
 export const register = async (email: string, password: string, name: string) => {
-  const response = await api.post('/auth/register', { email, password, name });
-  return response.data;
+  try {
+    const response = await api.post('/auth/register', {
+      email,
+      username: name,
+      password,
+      is_active: true
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || '注册失败，请稍后重试');
+  }
 };
 
 // Agent API
@@ -157,8 +181,15 @@ export const getExecutionLogs = async (id: string) => {
   return response.data;
 };
 
+// User API
+export const getCurrentUser = async (): Promise<User> => {
+  const response = await api.get('/users/me');
+  return response.data;
+};
+
 export const logout = () => {
   localStorage.removeItem('token');
+  localStorage.removeItem('user');
   window.location.href = '/login';
 };
 

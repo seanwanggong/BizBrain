@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from ..models.user import User
 from ..schemas.user import UserCreate, UserUpdate
 from ..core.security import get_password_hash, verify_password
+import uuid
 
 class UserService:
     def __init__(self, db: Session):
@@ -14,16 +15,17 @@ class UserService:
     def get_by_username(self, username: str) -> Optional[User]:
         return self.db.query(User).filter(User.username == username).first()
 
-    def get_by_id(self, id: int) -> Optional[User]:
+    def get_by_id(self, id: str) -> Optional[User]:
         return self.db.query(User).filter(User.id == id).first()
 
     def create(self, user_in: UserCreate) -> User:
         db_user = User(
+            id=str(uuid.uuid4()),  # 生成 UUID
             email=user_in.email,
             username=user_in.username,
             hashed_password=get_password_hash(user_in.password),
             is_active=user_in.is_active,
-            is_superuser=user_in.is_superuser,
+            is_superuser=False,  # 默认不是超级用户
         )
         self.db.add(db_user)
         self.db.commit()

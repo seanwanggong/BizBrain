@@ -85,9 +85,9 @@ const AgentsPage = () => {
       title: '工具',
       dataIndex: 'tools',
       key: 'tools',
-      render: (tools: string[]) => (
+      render: (tools: string[] | undefined) => (
         <Space size={[0, 8]} wrap>
-          {tools.map((tool) => (
+          {(tools || []).map((tool) => (
             <Tag key={tool}>{tool}</Tag>
           ))}
         </Space>

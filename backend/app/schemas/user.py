@@ -17,7 +17,7 @@ class UserUpdate(UserBase):
 
 
 class UserInDBBase(UserBase):
-    id: int
+    id: str
 
     class Config:
         from_attributes = True
@@ -37,4 +37,4 @@ class Token(BaseModel):
 
 
 class TokenPayload(BaseModel):
-    sub: Optional[int] = None 
+    sub: Optional[str] = None 

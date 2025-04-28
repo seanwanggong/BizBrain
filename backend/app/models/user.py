@@ -8,7 +8,7 @@ class User(Base):
 
     id = Column(String, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
-    name = Column(String, nullable=False)
+    username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
@@ -16,5 +16,5 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # 关联工作流
-    workflows = relationship("Workflow", back_populates="user")
-    workflow_executions = relationship("WorkflowExecution", back_populates="user") 
+    workflows = relationship("Workflow", back_populates="user", lazy="selectin")
+    workflow_executions = relationship("WorkflowExecution", back_populates="user", lazy="selectin") 

@@ -13,12 +13,12 @@ const LoginPage = () => {
     try {
       setLoading(true);
       const response = await login(values.email, values.password);
-      localStorage.setItem('token', response.token);
+      localStorage.setItem('token', response.access_token);
       localStorage.setItem('user', JSON.stringify(response.user));
       message.success('登录成功');
       router.push('/');
     } catch (error: any) {
-      message.error(error.response?.data?.message || '登录失败');
+      message.error(error.message || '登录失败，请稍后重试');
     } finally {
       setLoading(false);
     }

@@ -1,0 +1,64 @@
+.container {
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.header {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  margin: 0;
+}
+
+.createButton {
+  margin-left: 16px;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.card {
+  height: 100%;
+}
+
+.cardTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cardMeta {
+  margin-top: 16px;
+}
+
+.categories {
+  margin-top: 8px;
+}
+
+.categoryTag {
+  margin-right: 8px;
+  margin-bottom: 8px;
+}
+
+.empty {
+  text-align: center;
+  padding: 48px 0;
+}
+
+.emptyIcon {
+  font-size: 48px;
+  color: #d9d9d9;
+  margin-bottom: 16px;
+}
+
+.emptyText {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 16px;
+} 

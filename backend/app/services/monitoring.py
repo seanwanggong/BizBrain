@@ -11,9 +11,9 @@ from app.models.execution_log import ExecutionLog
 from app.schemas.monitoring import (
     TaskExecutionStats,
     TaskTypeStats,
-    ExecutionTimeline,
-    ErrorAnalysis,
-    PerformanceMetrics
+    WorkflowExecutionStats,
+    SystemStats,
+    MonitoringStats
 )
 
 class MonitoringService:
@@ -40,192 +40,104 @@ class MonitoringService:
 
         tasks = query.all()
         
-        total_executions = len(tasks)
-        successful_executions = sum(1 for t in tasks if t.status == "completed")
-        failed_executions = sum(1 for t in tasks if t.status == "failed")
+        total_tasks = len(tasks)
+        completed_tasks = sum(1 for t in tasks if t.status == TaskStatus.COMPLETED)
+        failed_tasks = sum(1 for t in tasks if t.status == TaskStatus.FAILED)
+        pending_tasks = sum(1 for t in tasks if t.status == TaskStatus.PENDING)
+        running_tasks = sum(1 for t in tasks if t.status == TaskStatus.RUNNING)
         
-        durations = [t.duration for t in tasks if t.duration is not None]
-        avg_duration = sum(durations) / len(durations) if durations else 0
-        min_duration = min(durations) if durations else 0
-        max_duration = max(durations) if durations else 0
+        # 计算每种任务类型的统计信息
+        task_type_stats = {}
+        for task_type in TaskType:
+            type_tasks = [t for t in tasks if t.task_type == task_type]
+            if type_tasks:
+                durations = [
+                    (t.completed_at - t.started_at).total_seconds()
+                    for t in type_tasks
+                    if t.completed_at and t.started_at
+                ]
+                avg_duration = sum(durations) / len(durations) if durations else None
+                task_type_stats[task_type] = TaskTypeStats(
+                    task_type=task_type.value,
+                    total_count=len(type_tasks),
+                    success_count=sum(1 for t in type_tasks if t.status == TaskStatus.COMPLETED),
+                    failure_count=sum(1 for t in type_tasks if t.status == TaskStatus.FAILED),
+                    average_duration=avg_duration
+                )
+
+        # 计算总体平均执行时间
+        all_durations = [
+            (t.completed_at - t.started_at).total_seconds()
+            for t in tasks
+            if t.completed_at and t.started_at
+        ]
+        average_duration = sum(all_durations) / len(all_durations) if all_durations else None
 
         return TaskExecutionStats(
-            total_executions=total_executions,
-            successful_executions=successful_executions,
-            failed_executions=failed_executions,
-            average_duration=avg_duration,
-            min_duration=min_duration,
-            max_duration=max_duration
+            total_tasks=total_tasks,
+            completed_tasks=completed_tasks,
+            failed_tasks=failed_tasks,
+            pending_tasks=pending_tasks,
+            running_tasks=running_tasks,
+            average_duration=average_duration,
+            by_type=list(task_type_stats.values())
         )
 
-    def get_task_type_stats(
+    def get_workflow_execution_stats(
         self,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None
-    ) -> TaskTypeStats:
-        query = self.db.query(
-            WorkflowTask.task_type,
-            func.count(WorkflowTask.id).label('count'),
-            func.avg(WorkflowTask.duration).label('avg_duration')
-        ).group_by(WorkflowTask.task_type)
-
+    ) -> WorkflowExecutionStats:
+        query = self.db.query(WorkflowExecution)
+        
         if start_time:
-            query = query.filter(WorkflowTask.created_at >= start_time)
+            query = query.filter(WorkflowExecution.created_at >= start_time)
         if end_time:
-            query = query.filter(WorkflowTask.created_at <= end_time)
+            query = query.filter(WorkflowExecution.created_at <= end_time)
 
-        results = query.all()
+        executions = query.all()
         
-        task_type_counts = {r.task_type: r.count for r in results}
-        task_type_durations = {r.task_type: r.avg_duration or 0 for r in results}
+        total_executions = len(executions)
+        completed_executions = sum(1 for e in executions if e.status == ExecutionStatus.COMPLETED)
+        failed_executions = sum(1 for e in executions if e.status == ExecutionStatus.FAILED)
+        pending_executions = sum(1 for e in executions if e.status == ExecutionStatus.PENDING)
+        running_executions = sum(1 for e in executions if e.status == ExecutionStatus.RUNNING)
         
-        success_rates = {}
-        for task_type in task_type_counts.keys():
-            success_count = self.db.query(WorkflowTask).filter(
-                WorkflowTask.task_type == task_type,
-                WorkflowTask.status == "completed"
-            ).count()
-            success_rates[task_type] = success_count / task_type_counts[task_type] if task_type_counts[task_type] > 0 else 0
-
-        return TaskTypeStats(
-            task_type_counts=task_type_counts,
-            task_type_durations=task_type_durations,
-            task_type_success_rates=success_rates
-        )
-
-    def get_execution_timeline(self, execution_id: int) -> ExecutionTimeline:
-        execution = self.db.query(WorkflowExecution).filter(
-            WorkflowExecution.id == execution_id
-        ).first()
-        
-        if not execution:
-            raise ValueError(f"Execution {execution_id} not found")
-
-        logs = self.db.query(ExecutionLog).filter(
-            ExecutionLog.execution_id == execution_id
-        ).order_by(ExecutionLog.timestamp).all()
-
-        return ExecutionTimeline(
-            execution_id=execution_id,
-            logs=logs,
-            start_time=execution.started_at,
-            end_time=execution.completed_at,
-            status=execution.status
-        )
-
-    def get_error_analysis(
-        self,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None
-    ) -> ErrorAnalysis:
-        query = self.db.query(
-            ExecutionLog.error_type,
-            func.count(ExecutionLog.id).label('count')
-        ).filter(
-            ExecutionLog.level == "ERROR"
-        ).group_by(ExecutionLog.error_type)
-
-        if start_time:
-            query = query.filter(ExecutionLog.timestamp >= start_time)
-        if end_time:
-            query = query.filter(ExecutionLog.timestamp <= end_time)
-
-        error_counts = {r.error_type: r.count for r in query.all()}
-        
-        # Get most common errors
-        common_errors = self.db.query(
-            ExecutionLog.error_message,
-            func.count(ExecutionLog.id).label('count')
-        ).filter(
-            ExecutionLog.level == "ERROR"
-        ).group_by(ExecutionLog.error_message).order_by(desc('count')).limit(10).all()
-        
-        most_common_errors = [
-            {"message": r.error_message, "count": r.count}
-            for r in common_errors
+        # 计算平均执行时间
+        durations = [
+            (e.completed_at - e.started_at).total_seconds()
+            for e in executions
+            if e.completed_at and e.started_at
         ]
+        average_duration = sum(durations) / len(durations) if durations else None
 
-        # Get error trends (last 7 days)
-        error_trends = {}
-        for error_type in error_counts.keys():
-            daily_counts = []
-            for i in range(7):
-                day = datetime.now() - timedelta(days=i)
-                count = self.db.query(ExecutionLog).filter(
-                    ExecutionLog.error_type == error_type,
-                    ExecutionLog.timestamp >= day,
-                    ExecutionLog.timestamp < day + timedelta(days=1)
-                ).count()
-                daily_counts.append(count)
-            error_trends[error_type] = daily_counts[::-1]
-
-        return ErrorAnalysis(
-            error_counts=error_counts,
-            most_common_errors=most_common_errors,
-            error_trends=error_trends
+        return WorkflowExecutionStats(
+            total_executions=total_executions,
+            completed_executions=completed_executions,
+            failed_executions=failed_executions,
+            pending_executions=pending_executions,
+            running_executions=running_executions,
+            average_duration=average_duration
         )
 
-    def get_performance_metrics(
-        self,
-        time_window: int = 7
-    ) -> PerformanceMetrics:
-        end_time = datetime.now()
-        start_time = end_time - timedelta(days=time_window)
+    def get_system_stats(self) -> SystemStats:
+        # 这里应该使用实际的系统监控工具来获取这些指标
+        # 这里只是返回示例数据
+        return SystemStats(
+            cpu_usage=50.0,
+            memory_usage=60.0,
+            disk_usage=40.0,
+            uptime=3600.0  # 1小时
+        )
 
-        # Get total executions and success rate
-        total_executions = self.db.query(WorkflowExecution).filter(
-            WorkflowExecution.started_at >= start_time,
-            WorkflowExecution.started_at <= end_time
-        ).count()
+    def get_monitoring_stats(self) -> MonitoringStats:
+        task_stats = self.get_task_execution_stats()
+        workflow_stats = self.get_workflow_execution_stats()
+        system_stats = self.get_system_stats()
 
-        successful_executions = self.db.query(WorkflowExecution).filter(
-            WorkflowExecution.started_at >= start_time,
-            WorkflowExecution.started_at <= end_time,
-            WorkflowExecution.status == "completed"
-        ).count()
-
-        success_rate = successful_executions / total_executions if total_executions > 0 else 0
-
-        # Get average execution time
-        avg_execution_time = self.db.query(
-            func.avg(WorkflowExecution.duration)
-        ).filter(
-            WorkflowExecution.started_at >= start_time,
-            WorkflowExecution.started_at <= end_time
-        ).scalar() or 0
-
-        # Calculate throughput (executions per day)
-        throughput = total_executions / time_window
-
-        # Calculate error rate
-        error_count = self.db.query(ExecutionLog).filter(
-            ExecutionLog.timestamp >= start_time,
-            ExecutionLog.timestamp <= end_time,
-            ExecutionLog.level == "ERROR"
-        ).count()
-
-        error_rate = error_count / total_executions if total_executions > 0 else 0
-
-        # Get response time percentiles
-        durations = self.db.query(WorkflowExecution.duration).filter(
-            WorkflowExecution.started_at >= start_time,
-            WorkflowExecution.started_at <= end_time
-        ).all()
-
-        durations = [d[0] for d in durations if d[0] is not None]
-        durations.sort()
-
-        percentiles = {
-            "p50": durations[int(len(durations) * 0.5)] if durations else 0,
-            "p90": durations[int(len(durations) * 0.9)] if durations else 0,
-            "p95": durations[int(len(durations) * 0.95)] if durations else 0,
-            "p99": durations[int(len(durations) * 0.99)] if durations else 0
-        }
-
-        return PerformanceMetrics(
-            success_rate=success_rate,
-            average_execution_time=avg_execution_time,
-            throughput=throughput,
-            error_rate=error_rate,
-            response_time_percentiles=percentiles
+        return MonitoringStats(
+            task_stats=task_stats,
+            workflow_stats=workflow_stats,
+            system_stats=system_stats,
+            updated_at=datetime.now()
         ) 

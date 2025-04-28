@@ -5,7 +5,7 @@ import logging
 from sqlalchemy.orm import Session
 from ..models.workflow_task import WorkflowTask, TaskStatus
 from ..models.task_log import TaskLog
-from ..schemas.workflow_task import TaskLogCreate
+from ..schemas.task_log import TaskLogCreate
 
 logger = logging.getLogger(__name__)
 
