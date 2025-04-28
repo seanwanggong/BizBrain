@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { Badge } from 'antd';
-import { CheckCircleOutlined } from '@ant-design/icons';
+import { Badge, Tooltip } from 'antd';
+import { CheckCircleOutlined, FormOutlined } from '@ant-design/icons';
 import styles from '@/styles/WorkflowDesigner.module.css';
 
 interface CustomNodeData {
@@ -9,46 +9,88 @@ interface CustomNodeData {
   description: string;
   type?: string;
   status?: 'running' | 'completed' | 'pending';
+  config?: {
+    formSchema?: {
+      fields: Array<{
+        name: string;
+        label: string;
+        type: string;
+      }>;
+    };
+  };
+  onDoubleClick?: (nodeId: string, nodeData: CustomNodeData) => void;
 }
 
-const handleStyle = {
-  width: '8px',
-  height: '8px',
-  background: '#1890ff',
-  border: '2px solid white',
-};
+const CustomNode = memo(({ id, data, isConnectable }: NodeProps<CustomNodeData>) => {
+  const isFormNode = data.type === 'form';
+  const nodeClass = `${styles.customNode} ${isFormNode ? styles.formNode : ''}`;
+  const formFieldsCount = data.config?.formSchema?.fields?.length || 0;
 
-const CustomNode = ({ data }: { data: CustomNodeData }) => {
+  const handleDoubleClick = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    console.log('Node double clicked:', id, data);
+    if (data.onDoubleClick && isFormNode) {
+      data.onDoubleClick(id, data);
+    }
+  };
+
   return (
-    <div className={`${styles.customNode} ${styles[`status-${data.status || 'pending'}`]}`}>
+    <div 
+      className={nodeClass} 
+      onDoubleClick={handleDoubleClick}
+      style={{ cursor: isFormNode ? 'pointer' : 'default' }}
+    >
       <Handle
         type="target"
         position={Position.Top}
-        className={styles.flowHandle}
+        isConnectable={isConnectable}
       />
-      <div className={styles.nodeContent}>
-        {data.type && (
-          <Badge 
-            className={styles.nodeType}
-            count={data.type} 
-            style={{ backgroundColor: '#1890ff' }} 
-          />
+      
+      <div style={{ marginBottom: '8px' }}>
+        {isFormNode && (
+          <Tooltip title={`已配置 ${formFieldsCount} 个字段`}>
+            <Badge 
+              count={formFieldsCount} 
+              style={{ 
+                backgroundColor: formFieldsCount > 0 ? '#52c41a' : '#d9d9d9',
+                marginRight: '8px'
+              }} 
+            />
+          </Tooltip>
         )}
-        <div className={styles.nodeLabel}>
-          {data.label}
-          {data.status === 'completed' && (
-            <CheckCircleOutlined className={styles.completedIcon} />
-          )}
-        </div>
-        <div className={styles.nodeDescription}>{data.description}</div>
+        <span>{data.label}</span>
+        {data.status === 'completed' && (
+          <CheckCircleOutlined style={{ color: '#52c41a', marginLeft: '4px' }} />
+        )}
       </div>
+      
+      <div style={{ fontSize: '12px', color: '#666' }}>
+        {data.description}
+        {isFormNode && (
+          <div style={{ 
+            marginTop: '4px', 
+            color: '#1890ff', 
+            fontSize: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px' 
+          }}>
+            <FormOutlined />
+            双击表单设置
+          </div>
+        )}
+      </div>
+
       <Handle
         type="source"
         position={Position.Bottom}
-        className={styles.flowHandle}
+        isConnectable={isConnectable}
       />
     </div>
   );
-};
+});
 
-export default memo(CustomNode); 
+CustomNode.displayName = 'CustomNode';
+
+export default CustomNode; 

@@ -3,7 +3,6 @@
   width: 100%;
   height: 100%;
   background: #fff;
-  border-radius: 8px;
   overflow: hidden;
 }
 
@@ -87,13 +86,84 @@
 
 /* Node Styles */
 .customNode {
-  padding: 6px 8px;
-  border-radius: 4px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  width: 120px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  width: 140px;
+  font-size: 13px;
+  line-height: 1.4;
   transition: all 0.2s;
+}
+
+.formNode {
+  border-color: #1890ff;
+  background: #fff;
+  position: relative;
+  cursor: pointer !important;
+}
+
+.formNode::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 6px;
+  background: rgba(24, 144, 255, 0.04);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.formNode:hover::after {
+  opacity: 1;
+}
+
+.formNode:hover {
+  border-color: #40a9ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.formInfo {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #1890ff;
+  display: flex;
+  align-items: center;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.formNode:hover .formInfo {
+  opacity: 1;
+}
+
+.selected {
+  position: relative;
+  border-color: #1890ff !important;
+  box-shadow: 0 0 6px rgba(24, 144, 255, 0.25);
+}
+
+.nodeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.nodeLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #111827;
+  flex: 1;
+}
+
+.nodeDescription {
+  font-size: 11px;
+  color: #6b7280;
+  line-height: 1.3;
 }
 
 .startNode {
@@ -127,19 +197,6 @@
 
 .nodeContent {
   position: relative;
-}
-
-.nodeLabel {
-  font-size: 12px;
-  font-weight: 500;
-  color: #111827;
-  margin-bottom: 1px;
-}
-
-.nodeDescription {
-  font-size: 10px;
-  color: #6b7280;
-  line-height: 1.2;
 }
 
 .flowHandle {
@@ -245,7 +302,71 @@
 }
 
 .container :global(.react-flow__node.selected) {
-  box-shadow: 0 0 0 2px #3b82f6 !important;
+  box-shadow: none !important;
+}
+
+.container :global(.react-flow__node.selected) .customNode,
+.container :global(.react-flow__node.selected) .startNode,
+.container :global(.react-flow__node.selected) .endNode,
+.container :global(.react-flow__node.selected) .conditionNode {
+  background: #fff;
+  position: relative;
+  transform: translateY(-1px);
+}
+
+.container :global(.react-flow__node.selected) .customNode::before,
+.container :global(.react-flow__node.selected) .startNode::before,
+.container :global(.react-flow__node.selected) .endNode::before,
+.container :global(.react-flow__node.selected) .conditionNode::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(
+    90deg,
+    #40a9ff,
+    #1890ff,
+    #096dd9
+  );
+  border-radius: 6px;
+  padding: 1px;
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.container :global(.react-flow__node.selected) .customNode::after,
+.container :global(.react-flow__node.selected) .startNode::after,
+.container :global(.react-flow__node.selected) .endNode::after,
+.container :global(.react-flow__node.selected) .conditionNode::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(
+    90deg,
+    #40a9ff,
+    #1890ff,
+    #096dd9
+  );
+  border-radius: 6px;
+  filter: blur(4px);
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.container :global(.react-flow__node.selected) .nodeLabel {
+  color: inherit;
+}
+
+.container :global(.react-flow__node.selected) .nodeDescription {
+  color: inherit;
+}
+
+.container :global(.react-flow__node.selected) .formInfo {
+  color: inherit;
 }
 
 .flowWrapper {

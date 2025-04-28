@@ -1,0 +1,19 @@
+.container {
+  min-height: 100vh;
+  padding: 24px;
+  background-color: #f0f2f5;
+}
+
+.card {
+  min-height: calc(100vh - 48px);
+  margin: 0 auto;
+  max-width: 1200px;
+}
+
+.designer {
+  height: calc(100vh - 160px);
+  border: 1px solid #f0f0f0;
+  border-radius: 2px;
+  background-color: #fff;
+  overflow: hidden;
+} 

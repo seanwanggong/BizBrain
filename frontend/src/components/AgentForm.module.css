@@ -1,0 +1,243 @@
+.form {
+  width: 100%;
+  min-height: calc(100vh - 64px); /* 减去顶部导航栏的高度 */
+  padding: 24px 50px;
+  background: #f7f9fc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form > :global(.ant-row) {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.card {
+  height: 100%;
+  margin-bottom: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: #fff;
+  border: none;
+  width: 100%;
+}
+
+.card:last-child {
+  margin-bottom: 24px;
+}
+
+.optionContent {
+  padding: 8px 0;
+}
+
+.optionLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.optionDescription {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.footer {
+  margin: 32px 0 0;
+  padding: 20px 50px;
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: center;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  width: 100%;
+}
+
+.footer > :global(.ant-space) {
+  max-width: 1200px;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+/* System prompt styles */
+.systemPrompt {
+  font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", monospace;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  background-color: #fafafa;
+}
+
+.systemPrompt:focus {
+  background-color: #fff;
+}
+
+/* Tool select styles */
+.toolSelect {
+  width: 100%;
+}
+
+.toolSelect :global(.ant-select-selection-item) {
+  height: auto !important;
+  padding: 4px 8px !important;
+}
+
+/* Form item styles */
+.form :global(.ant-form-item) {
+  margin-bottom: 24px;
+}
+
+.form :global(.ant-form-item):last-child {
+  margin-bottom: 0;
+}
+
+.form :global(.ant-form-item-label) {
+  padding-bottom: 8px;
+}
+
+.form :global(.ant-form-item-label > label) {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  height: 22px;
+}
+
+.form :global(.ant-form-item-explain) {
+  font-size: 13px;
+  min-height: 22px;
+  margin-top: 4px;
+}
+
+.form :global(.ant-form-item-extra) {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* Input styles */
+.form :global(.ant-input),
+.form :global(.ant-input-number),
+.form :global(.ant-select-selector) {
+  border-radius: 6px;
+  border-color: #e5e7eb;
+  transition: all 0.2s;
+}
+
+.form :global(.ant-input),
+.form :global(.ant-input-number-input) {
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.form :global(.ant-select-selector) {
+  min-height: 38px !important;
+  padding: 4px 12px !important;
+}
+
+.form :global(.ant-select-selection-item),
+.form :global(.ant-select-selection-placeholder) {
+  line-height: 30px !important;
+  font-size: 14px;
+}
+
+.form :global(.ant-input:hover),
+.form :global(.ant-input-number:hover),
+.form :global(.ant-select-selector:hover) {
+  border-color: #1890ff;
+}
+
+.form :global(.ant-input:focus),
+.form :global(.ant-input-number-focused),
+.form :global(.ant-select-focused .ant-select-selector) {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+/* Card styles */
+.form :global(.ant-card-head) {
+  min-height: auto;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafbfc;
+  border-radius: 8px 8px 0 0;
+}
+
+.form :global(.ant-card-head-title) {
+  padding: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.form :global(.ant-card-body) {
+  padding: 24px;
+}
+
+/* TextArea styles */
+.form :global(.ant-input-textarea textarea.ant-input) {
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 120px;
+}
+
+/* Button styles */
+.form :global(.ant-btn) {
+  height: 38px;
+  padding: 6px 20px;
+  font-size: 14px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* Tooltip icon */
+.form :global(.anticon-question-circle) {
+  font-size: 15px;
+  color: #9ca3af;
+  margin-left: 4px;
+}
+
+/* Select multiple styles */
+.form :global(.ant-select-multiple .ant-select-selection-item) {
+  background: #f3f4f6;
+  border: none;
+  border-radius: 4px;
+  color: #374151;
+  padding: 4px 8px;
+  margin: 2px 4px 2px 0;
+  height: 28px;
+  line-height: 20px;
+}
+
+.form :global(.ant-select-multiple .ant-select-selection-item-remove) {
+  color: #6b7280;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.form :global(.ant-select-multiple .ant-select-selection-search) {
+  margin-inline-start: 0;
+  margin-inline-end: 4px;
+}
+
+.form :global(.ant-select-dropdown) {
+  padding: 4px;
+}
+
+.form :global(.ant-select-item) {
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.form :global(.ant-select-item-option-content) {
+  display: flex;
+  flex-direction: column;
+}
+
+.form :global(.ant-select-selection-placeholder) {
+  color: #9ca3af;
+} 

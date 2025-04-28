@@ -1,0 +1,43 @@
+.formDesigner {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  background: #fff;
+  min-height: 400px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.fieldList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fieldCard {
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.fieldCard:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.fieldCard :global(.ant-card-actions) {
+  background: #fafafa;
+}
+
+.fieldCard :global(.ant-form-item) {
+  margin-bottom: 16px;
+}
+
+.fieldCard :global(.ant-form-item:last-child) {
+  margin-bottom: 0;
+} 

@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Typography, Card, Row, Col, Spin, Tag, Tabs, Modal } from 'antd';
-import { PlusOutlined, ShareAltOutlined, CopyOutlined, RobotOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Typography, Card, Row, Col, Spin, Tag, Tabs, Modal, message, Tooltip } from 'antd';
+import { PlusOutlined, ShareAltOutlined, CopyOutlined, RobotOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
-import { Agent } from '@/types/agent';
+import { Agent, AGENT_TYPES, MODEL_OPTIONS } from '@/types/agent';
 import { getAgents, deleteAgent } from '@/utils/api';
 import Link from 'next/link';
 import styles from '@/styles/Agents.module.css';
 
 const { Title, Paragraph } = Typography;
 const { TabPane } = Tabs;
+const { confirm } = Modal;
 
 const AgentsPage = () => {
   const router = useRouter();
@@ -31,54 +32,92 @@ const AgentsPage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteAgent(id);
-      fetchAgents();
-    } catch (error) {
-      console.error('Error deleting agent:', error);
-    }
+  const handleDelete = (id: string) => {
+    confirm({
+      title: '确认删除',
+      icon: <ExclamationCircleOutlined />,
+      content: '删除后无法恢复，确定要删除这个Agent吗？',
+      okText: '确认',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          await deleteAgent(id);
+          message.success('删除成功');
+          fetchAgents();
+        } catch (error) {
+          console.error('Failed to delete agent:', error);
+          message.error('删除失败');
+        }
+      },
+    });
   };
 
   const columns = [
     {
-      title: 'Name',
+      title: '名称',
       dataIndex: 'name',
       key: 'name',
+      render: (text: string) => <a>{text}</a>,
     },
     {
-      title: 'Description',
-      dataIndex: 'description',
-      key: 'description',
-    },
-    {
-      title: 'Type',
+      title: '类型',
       dataIndex: 'type',
       key: 'type',
+      render: (type: string) => {
+        const agentType = AGENT_TYPES.find(t => t.value === type);
+        return (
+          <Tooltip title={agentType?.description}>
+            <Tag color="blue">{agentType?.label || type}</Tag>
+          </Tooltip>
+        );
+      },
     },
     {
-      title: 'Status',
-      dataIndex: 'is_active',
-      key: 'is_active',
-      render: (isActive: boolean) => (
-        <span style={{ color: isActive ? '#52c41a' : '#ff4d4f' }}>
-          {isActive ? 'Active' : 'Inactive'}
-        </span>
+      title: '模型',
+      dataIndex: 'model',
+      key: 'model',
+      render: (model: string) => {
+        const modelOption = MODEL_OPTIONS.find(m => m.value === model);
+        return <Tag color="green">{modelOption?.label || model}</Tag>;
+      },
+    },
+    {
+      title: '工具',
+      dataIndex: 'tools',
+      key: 'tools',
+      render: (tools: string[]) => (
+        <Space size={[0, 8]} wrap>
+          {tools.map((tool) => (
+            <Tag key={tool}>{tool}</Tag>
+          ))}
+        </Space>
       ),
     },
     {
-      title: 'Actions',
-      key: 'actions',
+      title: '创建时间',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (date: string) => new Date(date).toLocaleString(),
+    },
+    {
+      title: '操作',
+      key: 'action',
       render: (_: any, record: Agent) => (
         <Space size="middle">
-          <Button type="link" onClick={() => router.push(`/agents/${record.id}/edit`)}>
-            Edit
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={() => router.push(`/agents/edit/${record.id}`)}
+          >
+            编辑
           </Button>
-          <Button type="link" onClick={() => router.push(`/agents/${record.id}/execute`)}>
-            Execute
-          </Button>
-          <Button type="link" danger onClick={() => handleDelete(record.id)}>
-            Delete
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => handleDelete(record.id)}
+          >
+            删除
           </Button>
         </Space>
       ),
@@ -186,7 +225,7 @@ const AgentsPage = () => {
         <div style={{ width: '100%' }}>
           <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Title level={2} className={styles.title}>Agent 系统</Title>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)}>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => router.push('/agents/create')}>
               创建 Agent
             </Button>
           </div>

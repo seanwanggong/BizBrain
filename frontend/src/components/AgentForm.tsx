@@ -1,31 +1,33 @@
 import React from 'react';
-import { Form, Input, Select, Switch, Button, Space } from 'antd';
-import { AgentCreate, AgentUpdate } from '@/types/agent';
+import { Form, Input, Select, InputNumber, Card, Button, Space, Tooltip, Typography, Row, Col } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
+import { AgentFormData, AGENT_TYPES, MODEL_OPTIONS, TOOL_OPTIONS } from '@/types/agent';
+import styles from './AgentForm.module.css';
 
 const { TextArea } = Input;
-const { Option } = Select;
+const { Text } = Typography;
 
 interface AgentFormProps {
-  initialValues?: AgentCreate | AgentUpdate;
-  onSubmit: (values: AgentCreate | AgentUpdate) => void;
+  initialValues?: Partial<AgentFormData>;
+  onSubmit: (values: AgentFormData) => void;
   onCancel: () => void;
-  isEdit?: boolean;
+  loading?: boolean;
 }
 
 const AgentForm: React.FC<AgentFormProps> = ({
   initialValues,
   onSubmit,
   onCancel,
-  isEdit = false,
+  loading = false,
 }) => {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<AgentFormData>();
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
       onSubmit(values);
     } catch (error) {
-      console.error('Validation failed:', error);
+      console.error('Form validation failed:', error);
     }
   };
 
@@ -33,64 +35,189 @@ const AgentForm: React.FC<AgentFormProps> = ({
     <Form
       form={form}
       layout="vertical"
-      initialValues={initialValues}
-      onFinish={handleSubmit}
+      initialValues={{
+        temperature: 0.7,
+        maxTokens: 2000,
+        tools: [],
+        ...initialValues,
+      }}
+      className={styles.form}
     >
-      <Form.Item
-        name="name"
-        label="Name"
-        rules={[{ required: true, message: 'Please input the agent name!' }]}
-      >
-        <Input />
-      </Form.Item>
+      <Row gutter={24}>
+        <Col span={8}>
+          <Card title="基本信息" className={styles.card}>
+            <Form.Item
+              name="name"
+              label="Agent名称"
+              rules={[{ required: true, message: '请输入Agent名称' }]}
+            >
+              <Input placeholder="给你的Agent起个名字" />
+            </Form.Item>
 
-      <Form.Item
-        name="description"
-        label="Description"
-        rules={[{ required: true, message: 'Please input the agent description!' }]}
-      >
-        <TextArea rows={4} />
-      </Form.Item>
+            <Form.Item
+              name="description"
+              label="描述"
+              rules={[{ required: true, message: '请输入Agent描述' }]}
+            >
+              <TextArea
+                placeholder="描述这个Agent的功能和用途"
+                rows={3}
+                showCount
+                maxLength={200}
+              />
+            </Form.Item>
 
-      <Form.Item
-        name="type"
-        label="Type"
-        rules={[{ required: true, message: 'Please select the agent type!' }]}
-      >
-        <Select>
-          <Option value="general">General</Option>
-          <Option value="data_analysis">Data Analysis</Option>
-          <Option value="web_scraping">Web Scraping</Option>
-          <Option value="file_processing">File Processing</Option>
-        </Select>
-      </Form.Item>
+            <Form.Item
+              name="type"
+              label="类型"
+              rules={[{ required: true, message: '请选择Agent类型' }]}
+            >
+              <Select placeholder="选择Agent类型">
+                {AGENT_TYPES.map(type => (
+                  <Select.Option key={type.value} value={type.value}>
+                    <div className={styles.optionContent}>
+                      <div className={styles.optionLabel}>{type.label}</div>
+                      <div className={styles.optionDescription}>{type.description}</div>
+                    </div>
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Card>
 
-      <Form.Item
-        name="config"
-        label="Configuration"
-        rules={[{ required: true, message: 'Please input the agent configuration!' }]}
-      >
-        <TextArea rows={6} />
-      </Form.Item>
+          <Card title="模型参数" className={styles.card}>
+            <Form.Item
+              name="model"
+              label="语言模型"
+              rules={[{ required: true, message: '请选择语言模型' }]}
+              extra="选择合适的语言模型来支持Agent的功能"
+            >
+              <Select placeholder="选择要使用的语言模型">
+                {MODEL_OPTIONS.map(model => (
+                  <Select.Option key={model.value} value={model.value}>
+                    {model.label}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
 
-      <Form.Item
-        name="is_active"
-        label="Active"
-        valuePropName="checked"
-      >
-        <Switch />
-      </Form.Item>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="temperature"
+                  label={
+                    <Space>
+                      温度
+                      <Tooltip title="控制输出的随机性，较高的值会使输出更有创意但可能不太准确">
+                        <QuestionCircleOutlined />
+                      </Tooltip>
+                    </Space>
+                  }
+                  rules={[{ required: true, message: '请设置温度值' }]}
+                  extra="建议值：创意任务 0.7-1.0，精确任务 0.1-0.3"
+                >
+                  <InputNumber
+                    min={0}
+                    max={2}
+                    step={0.1}
+                    style={{ width: '100%' }}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="maxTokens"
+                  label={
+                    <Space>
+                      最大Token数
+                      <Tooltip title="限制单次响应的最大长度">
+                        <QuestionCircleOutlined />
+                      </Tooltip>
+                    </Space>
+                  }
+                  rules={[{ required: true, message: '请设置最大Token数' }]}
+                  extra="建议值：一般任务 2000，长文本任务 4000"
+                >
+                  <InputNumber
+                    min={100}
+                    max={4000}
+                    step={100}
+                    style={{ width: '100%' }}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          </Card>
+        </Col>
 
-      <Form.Item>
-        <Space>
-          <Button type="primary" htmlType="submit">
-            {isEdit ? 'Update' : 'Create'}
-          </Button>
-          <Button onClick={onCancel}>
-            Cancel
+        <Col span={8}>
+          <Card title="工具配置" className={styles.card}>
+            <Form.Item
+              name="tools"
+              label={
+                <Space>
+                  可用工具
+                  <Tooltip title="选择Agent可以使用的工具">
+                    <QuestionCircleOutlined />
+                  </Tooltip>
+                </Space>
+              }
+              extra="为Agent配置所需的工具能力"
+            >
+              <Select
+                mode="multiple"
+                placeholder="选择Agent可以使用的工具"
+                optionLabelProp="label"
+                className={styles.toolSelect}
+              >
+                {TOOL_OPTIONS.map(tool => (
+                  <Select.Option key={tool.value} value={tool.value} label={tool.label}>
+                    <div className={styles.optionContent}>
+                      <div className={styles.optionLabel}>{tool.label}</div>
+                      <div className={styles.optionDescription}>{tool.description}</div>
+                    </div>
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Card>
+        </Col>
+
+        <Col span={8}>
+          <Card title="系统提示词" className={styles.card}>
+            <Form.Item
+              name="systemPrompt"
+              label={
+                <Space>
+                  系统提示词
+                  <Tooltip title="定义Agent的行为、专业领域和工作方式">
+                    <QuestionCircleOutlined />
+                  </Tooltip>
+                </Space>
+              }
+              rules={[{ required: true, message: '请输入系统提示词' }]}
+              extra="系统提示词决定了Agent的角色定位和行为方式"
+            >
+              <TextArea
+                placeholder="输入系统提示词，定义Agent的角色和行为"
+                rows={20}
+                showCount
+                maxLength={2000}
+                className={styles.systemPrompt}
+              />
+            </Form.Item>
+          </Card>
+        </Col>
+      </Row>
+
+      <div className={styles.footer}>
+        <Space size="middle">
+          <Button onClick={onCancel}>取消</Button>
+          <Button type="primary" onClick={handleSubmit} loading={loading}>
+            {initialValues ? '更新' : '创建'}
           </Button>
         </Space>
-      </Form.Item>
+      </div>
     </Form>
   );
 };

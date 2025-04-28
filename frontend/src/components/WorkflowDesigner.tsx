@@ -1,32 +1,31 @@
-import 'reactflow/dist/style.css';
-import React, { useCallback, useRef, useState, useEffect } from 'react';
-import ReactFlow, {
-  Background,
-  Controls,
-  MiniMap,
-  Node,
-  NodeTypes,
-  ReactFlowInstance,
-  Connection,
-  Edge,
-  addEdge,
-  useEdgesState,
-  useNodesState,
-  Panel,
-  ConnectionMode,
-  MarkerType,
-} from 'reactflow';
-import styles from '@/styles/WorkflowDesigner.module.css';
+import { ReactFlow, Node, Edge, Background, Controls, MiniMap, Panel, ConnectionMode, MarkerType, NodeTypes, OnEdgeUpdateFunc, EdgeChange, Connection, useNodesState, useEdgesState, ReactFlowInstance, addEdge, applyEdgeChanges, useReactFlow, applyNodeChanges, NodeChange } from 'reactflow';
+import { Modal } from 'antd';
+import React, { useCallback, useRef, useState, useEffect, useMemo, memo } from 'react';
 import CustomNode from './nodes/CustomNode';
 import StartNode from './nodes/StartNode';
-import EndNode from '@/components/nodes/EndNode';
+import EndNode from './nodes/EndNode';
 import ConditionNode from './nodes/ConditionNode';
+import FormDesigner from './FormDesigner';
+import styles from '@/styles/WorkflowDesigner.module.css';
+import 'reactflow/dist/style.css';
 
-const nodeTypes: NodeTypes = {
-  custom: CustomNode,
+// 创建一个记忆化的自定义节点包装组件
+const CustomNodeWrapper = memo(({ id, data, ...props }: any) => {
+  return (
+    <div>
+      <CustomNode {...props} id={id} data={data} />
+    </div>
+  );
+});
+
+CustomNodeWrapper.displayName = 'CustomNodeWrapper';
+
+// 在组件外部定义节点类型
+const NODE_TYPES: NodeTypes = {
   start: StartNode,
   end: EndNode,
   condition: ConditionNode,
+  custom: CustomNodeWrapper,
 };
 
 // 初始节点：添加一个开始节点
@@ -65,6 +64,32 @@ const nodeTypeList: NodeType[] = [
     description: '工作流的终点',
     category: '基础节点',
     isSpecial: true
+  },
+  
+  // Agent 节点
+  {
+    type: 'agent_task',
+    label: 'Agent 任务',
+    description: '执行特定的 Agent 任务',
+    category: 'Agent'
+  },
+  {
+    type: 'agent_conversation',
+    label: 'Agent 对话',
+    description: '与 Agent 进行对话交互',
+    category: 'Agent'
+  },
+  {
+    type: 'agent_chain',
+    label: 'Agent 链',
+    description: '多个 Agent 协同工作的任务链',
+    category: 'Agent'
+  },
+  {
+    type: 'agent_tool',
+    label: 'Agent 工具',
+    description: '调用 Agent 的特定工具能力',
+    category: 'Agent'
   },
   
   // 数据采集节点
@@ -179,81 +204,50 @@ const groupedNodeTypes = nodeTypeList.reduce((acc, node) => {
 }, {} as Record<string, NodeType[]>);
 
 interface WorkflowDesignerProps {
-  onChange?: (nodes: Node[], edges: Edge[]) => void;
+  onChange?: (data: { nodes: Node[]; edges: Edge[] }) => void;
 }
 
 const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({ onChange }) => {
-  const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes] = useNodesState(initialNodes);
+  const [edges, setEdges] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const [isFormDesignerOpen, setIsFormDesignerOpen] = useState(false);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
-  // 当节点或边发生变化时通知父组件
-  useEffect(() => {
-    onChange?.(nodes, edges);
-  }, [nodes, edges, onChange]);
-
-  const onConnect = useCallback((params: Connection) => {
-    // 验证连接是否有效
-    const sourceNode = nodes.find(node => node.id === params.source);
-    const targetNode = nodes.find(node => node.id === params.target);
-    
-    // 开始节点不能作为目标节点
-    if (targetNode?.type === 'start') {
-      return;
-    }
-    
-    // 结束节点不能作为源节点
-    if (sourceNode?.type === 'end') {
-      return;
-    }
-
-    // 条件节点的特殊处理
-    if (sourceNode?.type === 'condition') {
-      // 为条件节点添加标签
-      const newEdge = {
-        ...params,
-        type: 'smoothstep',
-        animated: true,
-        label: params.sourceHandle === 'true' ? '是' : '否',
-        labelStyle: { fill: '#666', fontWeight: 500 },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          width: 20,
-          height: 20,
-          color: '#1890ff',
-        },
-        style: {
-          stroke: '#1890ff',
-          strokeWidth: 2,
-        },
-      };
-      setEdges((eds) => addEdge(newEdge, eds));
-    } else {
-      // 普通连接
-      const newEdge = {
-        ...params,
-        type: 'smoothstep',
-        animated: false,
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          width: 20,
-          height: 20,
-          color: '#1890ff',
-        },
-        style: {
-          stroke: '#1890ff',
-          strokeWidth: 2,
-        },
-      };
-      setEdges((eds) => addEdge(newEdge, eds));
+  const handleNodeDoubleClick = useCallback((nodeId: string, nodeData: any) => {
+    console.log('Double click handler called with nodeId:', nodeId, 'nodeData:', nodeData);
+    if (nodeData && nodeData.type === 'form') {
+      const node = nodes.find(n => n.id === nodeId);
+      if (node) {
+        console.log('Opening form designer for node:', node);
+        setSelectedNode(node);
+        setIsFormDesignerOpen(true);
+      }
     }
   }, [nodes]);
 
-  const onDragStart = (event: React.DragEvent, nodeType: NodeType) => {
+  const onNodesChange = useCallback((changes: NodeChange[]) => {
+    setNodes((nds) => applyNodeChanges(changes, nds));
+  }, [setNodes]);
+
+  const onEdgesChange = useCallback((changes: EdgeChange[]) => {
+    setEdges((eds) => applyEdgeChanges(changes, eds));
+  }, [setEdges]);
+
+  const onConnect = useCallback((params: Connection) => {
+    setEdges((eds) => addEdge(params, eds));
+  }, [setEdges]);
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const onDragStart = useCallback((event: React.DragEvent, nodeType: NodeType) => {
     event.dataTransfer.setData('application/reactflow', JSON.stringify(nodeType));
     event.dataTransfer.effectAllowed = 'move';
-  };
+  }, []);
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
@@ -262,12 +256,12 @@ const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({ onChange }) => {
       const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
       const data = event.dataTransfer.getData('application/reactflow');
       
+      if (!reactFlowBounds || !reactFlowInstance) {
+        return;
+      }
+
       try {
         const nodeType = JSON.parse(data) as NodeType;
-        
-        if (!reactFlowBounds || !reactFlowInstance) {
-          return;
-        }
 
         // 检查是否已经存在开始或结束节点
         if (nodeType.type === 'start' && nodes.some(node => node.type === 'start')) {
@@ -277,13 +271,18 @@ const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({ onChange }) => {
           return;
         }
 
+        // 计算放置位置
         const position = reactFlowInstance.screenToFlowPosition({
           x: event.clientX - reactFlowBounds.left,
           y: event.clientY - reactFlowBounds.top,
         });
 
+        const nodeId = `${nodeType.type}-${Date.now()}`;
+        console.log('Creating new node with id:', nodeId);
+
+        // 添加新节点
         const newNode = {
-          id: `${nodeType.type}-${Date.now()}`,
+          id: nodeId,
           type: nodeType.type === 'start' || nodeType.type === 'end' || nodeType.type === 'condition' 
             ? nodeType.type 
             : 'custom',
@@ -292,21 +291,73 @@ const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({ onChange }) => {
             label: nodeType.label,
             description: nodeType.description,
             type: nodeType.type,
+            onDoubleClick: handleNodeDoubleClick,
+            config: nodeType.type === 'form' ? { formSchema: { fields: [] } } : {},
           },
         };
 
-        setNodes((nds) => nds.concat(newNode));
+        console.log('Adding new node:', newNode);
+        setNodes((nds) => {
+          const updatedNodes = nds.concat(newNode);
+          console.log('Updated nodes:', updatedNodes);
+          return updatedNodes;
+        });
       } catch (error) {
         console.error('Error dropping node:', error);
       }
     },
-    [reactFlowInstance, nodes]
+    [reactFlowInstance, nodes, handleNodeDoubleClick, setNodes]
   );
 
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  }, []);
+  const onEdgeUpdate = useCallback(
+    (oldEdge: Edge, newConnection: Connection) => {
+      setEdges((els) => {
+        const updatedEdges = els.map((e) => {
+          if (e.id === oldEdge.id) {
+            return {
+              ...e,
+              source: newConnection.source || e.source,
+              target: newConnection.target || e.target,
+              sourceHandle: newConnection.sourceHandle || e.sourceHandle,
+              targetHandle: newConnection.targetHandle || e.targetHandle,
+            };
+          }
+          return e;
+        });
+        return updatedEdges;
+      });
+    },
+    [setEdges]
+  );
+
+  const handleFormDesignerSubmit = useCallback((formSchema: any) => {
+    if (selectedNode) {
+      setNodes((nds) => 
+        nds.map(node => 
+          node.id === selectedNode.id 
+            ? { 
+                ...node, 
+                data: { 
+                  ...node.data, 
+                  config: {
+                    ...node.data.config,
+                    formSchema
+                  }
+                } 
+              }
+            : node
+        )
+      );
+      setIsFormDesignerOpen(false);
+      setSelectedNode(null);
+    }
+  }, [selectedNode, setNodes]);
+
+  useEffect(() => {
+    if (onChange) {
+      onChange({ nodes, edges });
+    }
+  }, [nodes, edges, onChange]);
 
   return (
     <div className={styles.container}>
@@ -337,10 +388,11 @@ const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({ onChange }) => {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onEdgeUpdate={onEdgeUpdate}
             onInit={setReactFlowInstance}
             onDrop={onDrop}
             onDragOver={onDragOver}
-            nodeTypes={nodeTypes}
+            nodeTypes={NODE_TYPES}
             fitView
             snapToGrid
             snapGrid={[20, 20]}
@@ -360,10 +412,6 @@ const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({ onChange }) => {
                 stroke: '#999',
               },
             }}
-            edgesUpdatable={true}
-            edgesFocusable={true}
-            connectOnClick={false}
-            elevateEdgesOnSelect={true}
           >
             <Background gap={20} color="#aaa" size={1} />
             <Controls showInteractive={false} />
@@ -395,6 +443,27 @@ const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({ onChange }) => {
           </ReactFlow>
         </div>
       </div>
+
+      <Modal
+        title="表单设计器"
+        open={isFormDesignerOpen}
+        onCancel={() => {
+          console.log('Closing form designer modal');
+          setIsFormDesignerOpen(false);
+          setSelectedNode(null);
+        }}
+        footer={null}
+        width={800}
+        style={{ top: 20 }}
+        bodyStyle={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}
+        destroyOnClose
+        maskClosable={false}
+      >
+        <FormDesigner
+          initialValue={selectedNode?.data?.config?.formSchema}
+          onChange={handleFormDesignerSubmit}
+        />
+      </Modal>
     </div>
   );
 };
