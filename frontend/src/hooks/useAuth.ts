@@ -1,12 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { useAppSelector, useAppDispatch } from '@/store';
+import { setAuth, setUser, User } from '@/store/slices/userSlice';
 import * as api from '../utils/api';
-
-interface User {
-  id: number;
-  username: string;
-  email: string;
-}
 
 interface AuthState {
   user: User | null;
@@ -14,45 +10,89 @@ interface AuthState {
 }
 
 interface LoginResponse {
-  success: boolean;
-  error?: string;
-  access_token?: string;
+  access_token: string;
+  token_type: string;
 }
 
-export const useAuth = () => {
+export function useAuth(requireAuth = false) {
   const router = useRouter();
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    loading: true
-  });
+  const dispatch = useAppDispatch();
+  const { isAuthenticated, user } = useAppSelector((state) => state.user);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    checkAuth();
-  }, []);
+    const checkAndRestoreAuth = async () => {
+      try {
+        // 如果已经登录，直接返回
+        if (isAuthenticated && user) {
+          setIsLoading(false);
+          return;
+        }
 
-  const checkAuth = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setAuthState({ user: null, loading: false });
-        return;
+        const token = localStorage.getItem('token');
+        const savedUser = localStorage.getItem('user');
+
+        if (token && savedUser) {
+          try {
+            const parsedUser = JSON.parse(savedUser) as User;
+            if (
+              parsedUser &&
+              typeof parsedUser === 'object' &&
+              'id' in parsedUser &&
+              'email' in parsedUser &&
+              'username' in parsedUser
+            ) {
+              // 恢复状态
+              dispatch(setAuth(true));
+              dispatch(setUser(parsedUser));
+              setIsLoading(false);
+              return;
+            }
+          } catch (error) {
+            console.error('Failed to parse user data:', error);
+          }
+        }
+
+        // 如果没有有效的认证信息，并且需要认证
+        if (requireAuth) {
+          // 清除无效的认证信息
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          dispatch(setAuth(false));
+          dispatch(setUser(null));
+
+          // 只有在非登录页面时才重定向
+          if (router.pathname !== '/login') {
+            router.replace('/login');
+          }
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        if (requireAuth) {
+          handleInvalidAuth();
+        }
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      const user = await api.getCurrentUser();
-      setAuthState({ user, loading: false });
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      localStorage.removeItem('token');
-      setAuthState({ user: null, loading: false });
-    }
-  };
+    checkAndRestoreAuth();
+  }, [dispatch, requireAuth, router, isAuthenticated, user]);
 
-  const login = async (email: string, password: string): Promise<LoginResponse> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const data = await api.login(email, password);
-      localStorage.setItem('token', data.access_token);
-      await checkAuth();
-      return { success: true, access_token: data.access_token };
+      const response = await api.login({ username: email, password });
+      localStorage.setItem('token', response.access_token);
+      
+      // 获取用户信息
+      const userData = await api.getCurrentUser();
+      localStorage.setItem('user', JSON.stringify(userData));
+      dispatch(setAuth(true));
+      dispatch(setUser(userData));
+      
+      // 登录成功后跳转到控制台
+      router.push('/dashboard');
+      return { success: true };
     } catch (error) {
       console.error('Login failed:', error);
       return { 
@@ -64,9 +104,7 @@ export const useAuth = () => {
 
   const register = async (username: string, email: string, password: string) => {
     try {
-      const data = await api.register(username, email, password);
-      localStorage.setItem('token', data.access_token);
-      await checkAuth();
+      await api.register({ username, email, password });
       return { success: true };
     } catch (error) {
       console.error('Registration failed:', error);
@@ -79,16 +117,53 @@ export const useAuth = () => {
 
   const logout = () => {
     localStorage.removeItem('token');
-    setAuthState({ user: null, loading: false });
+    localStorage.removeItem('user');
+    dispatch(setAuth(false));
+    dispatch(setUser(null));
     router.push('/login');
   };
 
+  const checkAuth = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        handleInvalidAuth();
+        return;
+      }
+
+      const currentUser = await api.getCurrentUser();
+      if (currentUser) {
+        localStorage.setItem('user', JSON.stringify(currentUser));
+        dispatch(setAuth(true));
+        dispatch(setUser(currentUser));
+      } else {
+        handleInvalidAuth();
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      handleInvalidAuth();
+    }
+  };
+
+  const handleInvalidAuth = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    dispatch(setAuth(false));
+    dispatch(setUser(null));
+    
+    // 只有当当前不在登录页时才重定向
+    if (requireAuth && router.pathname !== '/login') {
+      router.replace('/login');
+    }
+  };
+
   return {
-    user: authState.user,
-    loading: authState.loading,
+    isAuthenticated,
+    user,
     login,
     register,
     logout,
     checkAuth,
+    isLoading,
   };
-}; 
+} 

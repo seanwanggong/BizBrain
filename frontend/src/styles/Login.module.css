@@ -3,25 +3,91 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f0f2f5;
+  background: #fff;
 }
 
-.content {
+.container::before {
+  content: '';
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 60%);
+  transform: rotate(30deg);
+}
+
+.card {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   padding: 40px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.form {
-  margin-top: 24px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  animation: fadeIn 0.5s ease-out;
 }
 
 .title {
   text-align: center;
+  margin-bottom: 32px !important;
+  color: #2c5282 !important;
+  font-weight: 600 !important;
+  font-size: 28px !important;
+}
+
+.subtitle {
+  text-align: center;
+  margin-bottom: 32px;
+  color: #4a5568;
+}
+
+.form :global(.ant-form-item) {
   margin-bottom: 24px;
+}
+
+.form :global(.ant-input-affix-wrapper) {
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 8px 16px;
+  height: 48px;
+  transition: all 0.3s ease;
+}
+
+.form :global(.ant-input-affix-wrapper:hover),
+.form :global(.ant-input-affix-wrapper:focus),
+.form :global(.ant-input-affix-wrapper-focused) {
+  border-color: #4299e1;
+  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
+}
+
+.form :global(.ant-input) {
+  font-size: 16px;
+}
+
+.form :global(.ant-form-item-explain-error) {
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.form :global(.anticon) {
+  color: #718096;
+}
+
+.submitButton {
+  height: 48px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+  transition: all 0.3s ease;
+}
+
+.submitButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(66, 153, 225, 0.4);
+  background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
 }
 
 .footer {
@@ -30,16 +96,41 @@
 }
 
 .footer a {
-  color: #1890ff;
+  color: #4299e1;
+  font-size: 15px;
+  transition: all 0.3s ease;
 }
 
 .footer a:hover {
-  color: #40a9ff;
+  color: #2b6cb0;
+  text-decoration: underline;
+}
+
+.logo {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.logo img {
+  height: 48px;
+  margin-bottom: 16px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 576px) {
   .card {
     max-width: 90%;
-    margin: 0 16px;
+    margin: 16px;
+    padding: 24px;
   }
 } 

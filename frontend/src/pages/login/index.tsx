@@ -1,26 +1,34 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Card, message, Typography } from 'antd';
+import { Form, Input, Button, Card, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { useRouter } from 'next/router';
-import { login } from '@/utils/api';
-import styles from '@/styles/Login.module.css';
+import { useAuth } from '@/hooks/useAuth';
+import styles from '@/styles/Auth.module.css';
 import Link from 'next/link';
 
-const { Title } = Typography;
+interface LoginForm {
+  email: string;
+  password: string;
+}
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const { login } = useAuth();
 
-  const onFinish = async (values: { email: string; password: string }) => {
+  const onFinish = async (values: LoginForm) => {
     try {
       setLoading(true);
-      const response = await login(values.email, values.password);
-      localStorage.setItem('token', response.access_token);
-      message.success('登录成功');
-      router.push('/dashboard');
-    } catch (error: any) {
-      message.error(error.message || '登录失败');
+      console.log('Login attempt with:', values.email);
+      const result = await login(values.email, values.password);
+      console.log('Login result:', result);
+
+      if (result.success) {
+        message.success('登录成功');
+      } else {
+        message.error(result.error || '登录失败');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      message.error('登录失败，请重试');
     } finally {
       setLoading(false);
     }
@@ -29,15 +37,13 @@ const LoginPage = () => {
   return (
     <div className={styles.container}>
       <Card className={styles.card}>
-        <Title level={2} className={styles.title}>
-          登录 BizBrain
-        </Title>
+        <h1 className={styles.title}>登录 BizBrain</h1>
         <Form
           name="login"
-          initialValues={{ remember: true }}
           onFinish={onFinish}
-          size="large"
+          className={styles.form}
           layout="vertical"
+          requiredMark={false}
         >
           <Form.Item
             name="email"
@@ -49,6 +55,7 @@ const LoginPage = () => {
             <Input
               prefix={<UserOutlined />}
               placeholder="邮箱"
+              size="large"
             />
           </Form.Item>
 
@@ -59,11 +66,18 @@ const LoginPage = () => {
             <Input.Password
               prefix={<LockOutlined />}
               placeholder="密码"
+              size="large"
             />
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" block loading={loading}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              className={styles.submitButton}
+              loading={loading}
+              block
+            >
               登录
             </Button>
           </Form.Item>

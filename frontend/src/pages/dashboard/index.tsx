@@ -1,6 +1,6 @@
 import React from 'react';
-import { Row, Col, Statistic, List, Button } from 'antd';
-import { ArrowUpOutlined, RobotOutlined, ApiOutlined, BookOutlined } from '@ant-design/icons';
+import { Row, Col, Statistic, List, Button, Card } from 'antd';
+import { ArrowUpOutlined, RobotOutlined, ApiOutlined, BookOutlined, UserOutlined, MessageOutlined, CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import styles from './index.module.css';
 
@@ -26,42 +26,40 @@ const DashboardPage = () => {
       <div className={styles.dashboard}>
         <Row gutter={[24, 24]}>
           <Col xs={24} sm={12} lg={6}>
-            <div className={styles.statsCard}>
+            <Card>
               <Statistic
-                title="Agent总数"
-                value={12}
-                prefix={<RobotOutlined />}
-                valueStyle={{ color: '#3f8600' }}
+                title="总用户数"
+                value={1234}
+                prefix={<UserOutlined />}
               />
-            </div>
+            </Card>
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <div className={styles.statsCard}>
+            <Card>
               <Statistic
-                title="今日对话"
-                value={156}
-                prefix={<ArrowUpOutlined />}
-                valueStyle={{ color: '#3f8600' }}
+                title="对话总数"
+                value={5678}
+                prefix={<MessageOutlined />}
               />
-            </div>
+            </Card>
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <div className={styles.statsCard}>
+            <Card>
               <Statistic
-                title="工作流数"
-                value={8}
-                prefix={<ApiOutlined />}
+                title="完成任务"
+                value={890}
+                prefix={<CheckCircleOutlined />}
               />
-            </div>
+            </Card>
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <div className={styles.statsCard}>
+            <Card>
               <Statistic
-                title="知识库数量"
-                value={5}
-                prefix={<BookOutlined />}
+                title="处理中"
+                value={123}
+                prefix={<ClockCircleOutlined />}
               />
-            </div>
+            </Card>
           </Col>
         </Row>
 

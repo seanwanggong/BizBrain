@@ -1,40 +1,15 @@
 import '@/styles/antd.css'
 import '@/styles/globals.css'
-import { ConfigProvider, theme } from 'antd'
+import { ConfigProvider } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import type { AppProps } from 'next/app'
 import Head from 'next/head'
-import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
 import { Provider } from 'react-redux'
 import { store } from '@/store'
 import Layout from '@/components/Layout'
-import { setAuth, setUser } from '@/store/slices/userSlice'
+import AuthGuard from '@/components/AuthGuard'
 
 export default function App({ Component, pageProps }: AppProps) {
-  const router = useRouter()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    // Check if user is authenticated
-    const token = localStorage.getItem('token')
-    const userData = localStorage.getItem('user')
-    
-    if (token && userData) {
-      try {
-        const user = JSON.parse(userData)
-        store.dispatch(setAuth(true))
-        store.dispatch(setUser(user))
-      } catch (error) {
-        console.error('Failed to parse user data:', error)
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-      }
-    }
-    
-    setMounted(true)
-  }, [])
-
   return (
     <Provider store={store}>
       <ConfigProvider
@@ -76,7 +51,6 @@ export default function App({ Component, pageProps }: AppProps) {
               align-items: center !important;
               justify-content: space-between !important;
               border-bottom: 1px solid #f0f0f0 !important;
-              transition: none !important;
             }
             .ant-layout-content {
               margin-top: 64px !important;
@@ -84,7 +58,9 @@ export default function App({ Component, pageProps }: AppProps) {
           `}</style>
         </Head>
         <Layout>
-          <Component {...pageProps} />
+          <AuthGuard>
+            <Component {...pageProps} />
+          </AuthGuard>
         </Layout>
       </ConfigProvider>
     </Provider>

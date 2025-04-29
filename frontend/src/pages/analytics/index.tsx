@@ -20,7 +20,7 @@ const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
 const AnalyticsPage = () => {
-  const [dateRange, setDateRange] = useState<[Date, Date] | null>(null);
+  const [ setDateRange] = useState<[Date, Date] | null>(null);
   const [metricType, setMetricType] = useState('conversations');
 
   // 示例数据
@@ -85,7 +85,7 @@ const AnalyticsPage = () => {
   ];
 
   return (
-    <DashboardLayout>
+    <DashboardLayout title="数据分析">
       <div className={styles.analytics}>
         <Title level={2}>数据分析</Title>
 

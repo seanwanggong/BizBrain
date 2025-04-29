@@ -1,12 +1,12 @@
 import { ReactNode } from 'react';
-import { Layout as AntLayout, Menu, Button, Avatar, Dropdown } from 'antd';
+import { Layout as AntLayout, Menu, Button, Avatar, Dropdown, message } from 'antd';
 import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import styles from '../styles/Layout.module.css';
 import { useAppSelector, useAppDispatch } from '@/store';
-import { setAuth, setUser } from '@/store/slices/userSlice';
+import { logout } from '@/store/slices/userSlice';
 
 const { Header, Content, Footer } = AntLayout;
 
@@ -20,6 +20,12 @@ export default function Layout({ children }: LayoutProps) {
   const { isAuthenticated, user } = useAppSelector((state) => state.user);
 
   const handleMenuClick = ({ key }: { key: string }) => {
+    if (!isAuthenticated && ['dashboard', 'agents', 'workflows', 'knowledge'].includes(key)) {
+      message.warning('请先登录');
+      router.push('/login');
+      return;
+    }
+
     if (key === 'home') {
       router.push('/');
     } else {
@@ -28,8 +34,7 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const handleLogout = () => {
-    dispatch(setAuth(false));
-    dispatch(setUser(null));
+    dispatch(logout());
     router.push('/login');
   };
 
@@ -48,7 +53,28 @@ export default function Layout({ children }: LayoutProps) {
   ];
 
   const getMenuItems = () => {
-    const items = [
+    if (isAuthenticated) {
+      return [
+        {
+          key: 'dashboard',
+          label: '控制台',
+        },
+        {
+          key: 'agents',
+          label: 'Agent系统',
+        },
+        {
+          key: 'workflows',
+          label: '工作流',
+        },
+        {
+          key: 'knowledge',
+          label: '知识库',
+        }
+      ];
+    }
+
+    return [
       {
         key: 'home',
         label: '首页',
@@ -58,15 +84,6 @@ export default function Layout({ children }: LayoutProps) {
         label: '文档',
       },
     ];
-
-    if (isAuthenticated) {
-      items.push({
-        key: 'dashboard',
-        label: '控制台',
-      });
-    }
-
-    return items;
   };
 
   return (

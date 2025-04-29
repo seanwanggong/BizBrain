@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Tabs, Typography, message } from 'antd';
+import { Modal, Tabs, Typography } from 'antd';
 import { KnowledgeDocument } from '@/types/knowledge';
 import ReactMarkdown from 'react-markdown';
 import styles from './DocumentPreview.module.css';

@@ -4,7 +4,7 @@ import { PlusOutlined, DeleteOutlined, ArrowUpOutlined, ArrowDownOutlined } from
 import { FormField, FormSchema } from '@/types/workflow';
 import styles from '@/styles/FormDesigner.module.css';
 
-const { TextArea } = Input;
+// const { TextArea } = Input;
 const { Option } = Select;
 
 interface FormDesignerProps {
@@ -203,7 +203,7 @@ const FormDesigner: React.FC<FormDesignerProps> = ({ onChange, initialValue }) =
           <Form.List name="options">
             {(fields, { add, remove }) => (
               <>
-                {fields.map((field, index) => (
+                {fields.map((field) => (
                   <Space key={field.key} align="baseline">
                     <Form.Item
                       {...field}

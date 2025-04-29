@@ -1,39 +1,30 @@
-import React, { ReactNode } from 'react';
-import { Card, Typography } from 'antd';
-import styles from './DashboardLayout.module.css';
+import React from 'react';
+import { Layout } from 'antd';
+import styles from '@/styles/DashboardLayout.module.css';
 
-const { Title } = Typography;
+const { Content } = Layout;
 
 interface DashboardLayoutProps {
-  children: ReactNode;
-  title: string;
+  children: React.ReactNode;
+  title?: string;
   subtitle?: string;
-  extra?: ReactNode;
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({
-  children,
-  title,
-  subtitle,
-  extra
-}) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title, subtitle }) => {
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <div>
-          <Title level={2} className={styles.title}>{title}</Title>
-          {subtitle && (
-            <Typography.Text type="secondary" className={styles.subtitle}>
-              {subtitle}
-            </Typography.Text>
-          )}
+    <Content className={styles.content}>
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <div>
+            <h2 className={styles.title}>{title}</h2>
+            {subtitle && <span className={styles.subtitle}>{subtitle}</span>}
+          </div>
         </div>
-        {extra && <div className={styles.extra}>{extra}</div>}
+        <div className={styles.contentInner}>
+          {children}
+        </div>
       </div>
-      <Card className={styles.content}>
-        {children}
-      </Card>
-    </div>
+    </Content>
   );
 };
 

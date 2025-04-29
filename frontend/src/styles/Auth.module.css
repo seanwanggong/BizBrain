@@ -1,114 +1,85 @@
 .container {
   display: flex;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-}
-
-.leftPanel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 40px;
-  background: rgba(255, 255, 255, 0.9);
-  position: relative;
-  overflow: hidden;
+  min-height: calc(100vh - 64px);
+  background: #f0f2f5;
+  padding: 24px;
 }
 
-.leftPanel::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('/images/auth-bg.svg') no-repeat center center;
-  background-size: cover;
-  opacity: 0.1;
-  z-index: 0;
-}
-
-.rightPanel {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px;
-}
-
-.content {
+.card {
   width: 100%;
   max-width: 400px;
-  padding: 40px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  position: relative;
-  z-index: 1;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.logo {
-  margin-bottom: 40px;
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #262626;
   text-align: center;
-}
-
-.logo h1 {
-  font-size: 32px;
-  color: #1890ff;
-  margin: 0;
-}
-
-.logo p {
-  color: rgba(0, 0, 0, 0.45);
-  margin: 8px 0 0;
+  margin-bottom: 32px;
 }
 
 .form {
-  margin-top: 24px;
+  width: 100%;
 }
 
 .formItem {
   margin-bottom: 24px;
 }
 
-.formItem :global(.ant-form-item-label) {
-  padding-bottom: 8px;
-}
-
-.formItem :global(.ant-input),
-.formItem :global(.ant-input-password) {
-  height: 40px;
-  border-radius: 8px;
+.formLabel {
+  font-weight: 500;
+  color: #262626;
 }
 
 .submitButton {
   height: 40px;
-  border-radius: 8px;
+  font-size: 16px;
   font-weight: 500;
-  margin-top: 8px;
 }
 
-.linkButton {
-  padding: 0;
-  height: auto;
+.footer {
+  margin-top: 24px;
+  text-align: center;
 }
 
-@media (max-width: 768px) {
+.footer a {
+  color: #1890ff;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.footer a:hover {
+  color: #40a9ff;
+}
+
+.divider {
+  margin: 24px 0;
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+.errorMessage {
+  color: #ff4d4f;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+/* 响应式设计 */
+@media (max-width: 576px) {
   .container {
-    flex-direction: column;
+    padding: 16px;
   }
 
-  .leftPanel {
-    padding: 24px;
-    min-height: 200px;
+  .card {
+    box-shadow: none;
   }
 
-  .rightPanel {
-    padding: 24px;
-  }
-
-  .content {
-    padding: 24px;
+  .title {
+    font-size: 20px;
+    margin-bottom: 24px;
   }
 } 

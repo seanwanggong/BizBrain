@@ -1,0 +1,56 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: #001529;
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+}
+
+.logo {
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  margin-right: 48px;
+  white-space: nowrap;
+}
+
+.menu {
+  flex: 1;
+  background: transparent;
+  border: none;
+}
+
+.menu :global(.ant-menu-item) {
+  padding: 0 20px;
+}
+
+.userSection {
+  margin-left: 16px;
+}
+
+.userButton {
+  color: white !important;
+  padding: 0 12px;
+  height: 48px;
+}
+
+.userButton:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 0 12px;
+  }
+
+  .logo {
+    margin-right: 24px;
+  }
+
+  .menu :global(.ant-menu-item) {
+    padding: 0 12px;
+  }
+} 

@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
+from uuid import UUID
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -12,7 +13,7 @@ class UserLogin(BaseModel):
     password: str = Field(..., min_length=6, max_length=100)
 
 class UserResponse(UserBase):
-    id: str
+    id: UUID
     is_active: bool
     is_superuser: bool
 
