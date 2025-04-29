@@ -86,13 +86,12 @@ BizBrain 是一个开源的AI Agent协作平台，旨在帮助企业实现智能
 ## 快速开始
 
 ### 环境要求
-
-- Python 3.9+
 - Node.js 16+
-- Docker
-- PostgreSQL
+- Python 3.9+
+- Docker & docker-compose
+- PostgreSQL 14+
 
-### 安装步骤
+### 开发环境设置
 
 1. 克隆仓库
 ```bash
@@ -100,34 +99,61 @@ git clone https://github.com/seanwanggong/bizbrain.git
 cd bizbrain
 ```
 
-2. 安装后端依赖
-```bash
-cd backend
-pip install -r requirements.txt
-```
-
-3. 安装前端依赖
+2. 安装前端依赖
 ```bash
 cd frontend
 npm install
 ```
 
-4. 配置环境变量
+3. 安装后端依赖
 ```bash
-cp .env.example .env
-# 编辑 .env 文件，填入必要的配置
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: .\venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-5. 启动服务
+4. 环境变量配置
 ```bash
-# 启动后端
-cd backend
-uvicorn main:app --reload
+# 后端环境变量
+cp backend/.env.example backend/.env
 
-# 启动前端
+# 前端环境变量
+cp frontend/.env.example frontend/.env
+```
+
+5. 启动开发服务器
+
+后端：
+```bash
+cd backend
+uvicorn app.main:app --reload
+```
+
+前端：
+```bash
 cd frontend
 npm run dev
 ```
+
+### Docker部署
+
+使用docker-compose启动所有服务：
+
+```bash
+docker-compose up -d
+```
+
+访问：
+- 前端: http://localhost:3000
+- 后端API: http://localhost:8000
+- API文档: http://localhost:8000/docs
+
+## 文档
+
+- [产品需求文档](./PRD.md)
+- [API文档](http://localhost:8000/docs)
+- [开发文档](./docs/development.md)
 
 ## 贡献指南
 

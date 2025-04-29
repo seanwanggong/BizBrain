@@ -1,102 +1,48 @@
-import React, { useState } from 'react';
-import { Card, Button, Space, Table, Tag, Typography, Modal, message, Input, Upload } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, FileOutlined, UploadOutlined, SearchOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { Table, Button, Tag, Space, Row, Col, Statistic, message } from 'antd';
+import { PlusOutlined, SyncOutlined, BookOutlined, FileTextOutlined, TeamOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
-import KnowledgeBaseForm from '@/components/KnowledgeBaseForm';
-import { KnowledgeBase } from '@/types/knowledge';
-import styles from './index.module.css';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
+import * as api from '@/utils/api';
+import styles from './index.module.css';
 
-const { Title } = Typography;
-const { Search } = Input;
+interface KnowledgeBase {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  status: string;
+  documents_count: number;
+  created_at: string;
+  updated_at: string;
+}
 
 const KnowledgePage = () => {
   const router = useRouter();
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedKnowledgeBase, setSelectedKnowledgeBase] = useState<KnowledgeBase | null>(null);
-  const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([
-    {
-      id: '1',
-      name: '产品文档',
-      description: '包含所有产品相关的文档和说明',
-      createdAt: '2024-03-20',
-      updatedAt: '2024-03-20',
-      documents: [],
-    },
-    {
-      id: '2',
-      name: '技术文档',
-      description: '技术架构和开发文档',
-      createdAt: '2024-03-19',
-      updatedAt: '2024-03-19',
-      documents: [],
-    },
-  ]);
-  const [searchText, setSearchText] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
 
-  const handleCreate = () => {
-    setSelectedKnowledgeBase(null);
-    setIsModalVisible(true);
-  };
-
-  const handleEdit = (record: KnowledgeBase) => {
-    setSelectedKnowledgeBase(record);
-    setIsModalVisible(true);
-  };
-
-  const handleDelete = (record: KnowledgeBase) => {
-    Modal.confirm({
-      title: '确认删除',
-      content: `确定要删除知识库 "${record.name}" 吗？`,
-      onOk: () => {
-        setKnowledgeBases(knowledgeBases.filter(kb => kb.id !== record.id));
-        message.success('知识库已删除');
-      },
-    });
-  };
-
-  const handleSubmit = (values: any) => {
-    if (selectedKnowledgeBase) {
-      // 更新现有知识库
-      setKnowledgeBases(knowledgeBases.map(kb => 
-        kb.id === selectedKnowledgeBase.id 
-          ? { ...kb, ...values, updatedAt: new Date().toISOString() }
-          : kb
-      ));
-      message.success('知识库已更新');
-    } else {
-      // 创建新知识库
-      const newKnowledgeBase: KnowledgeBase = {
-        id: Date.now().toString(),
-        ...values,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        documents: [],
-      };
-      setKnowledgeBases([...knowledgeBases, newKnowledgeBase]);
-      message.success('知识库已创建');
-    }
-    setIsModalVisible(false);
-  };
-
-  const handleSearch = (value: string) => {
-    setSearchText(value);
-    // 实现搜索逻辑
-  };
-
-  const handleUpload = (info: any) => {
-    if (info.file.status === 'done') {
-      message.success(`${info.file.name} 上传成功`);
-    } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} 上传失败`);
+  const fetchKnowledgeBases = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getKnowledgeBases();
+      setKnowledgeBases(data);
+    } catch (error) {
+      message.error('获取知识库列表失败');
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchKnowledgeBases();
+  }, []);
 
   const columns = [
     {
-      title: '名称',
-      dataIndex: 'name',
-      key: 'name',
+      title: '知识库名称',
+      dataIndex: 'title',
+      key: 'title',
       render: (text: string, record: KnowledgeBase) => (
         <a onClick={() => router.push(`/knowledge/${record.id}`)}>{text}</a>
       ),
@@ -105,87 +51,133 @@ const KnowledgePage = () => {
       title: '描述',
       dataIndex: 'description',
       key: 'description',
+      ellipsis: true,
     },
     {
-      title: '文档数量',
-      key: 'documents',
-      render: (record: KnowledgeBase) => (
-        <Tag color="blue">{record.documents.length}</Tag>
+      title: '分类',
+      dataIndex: 'category',
+      key: 'category',
+      render: (category: string) => (
+        <Tag color="blue">{category}</Tag>
       ),
     },
     {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => {
+        const statusMap = {
+          active: { color: 'success', text: '已发布' },
+          draft: { color: 'default', text: '草稿' },
+          archived: { color: 'warning', text: '已归档' },
+        };
+        const { color, text } = statusMap[status as keyof typeof statusMap] || { color: 'default', text: status };
+        return <Tag color={color}>{text}</Tag>;
+      },
+    },
+    {
+      title: '文档数',
+      dataIndex: 'documents_count',
+      key: 'documents_count',
+    },
+    {
       title: '更新时间',
-      dataIndex: 'updatedAt',
-      key: 'updatedAt',
+      dataIndex: 'updated_at',
+      key: 'updated_at',
+      render: (date: string) => new Date(date).toLocaleString(),
     },
     {
       title: '操作',
       key: 'action',
-      render: (record: KnowledgeBase) => (
+      render: (_: any, record: KnowledgeBase) => (
         <Space size="middle">
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          >
-            编辑
-          </Button>
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record)}
-          >
-            删除
-          </Button>
+          <a onClick={() => router.push(`/knowledge/${record.id}`)}>查看</a>
+          <a onClick={() => router.push(`/knowledge/${record.id}/edit`)}>编辑</a>
+          <a onClick={() => handleDelete(record.id)}>删除</a>
         </Space>
       ),
     },
   ];
 
-  return (
-    <DashboardLayout>
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <Title level={2}>知识库管理</Title>
-          <Space size="large">
-            <Search
-              placeholder="搜索知识库"
-              onSearch={handleSearch}
-              style={{ width: 300 }}
-            />
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleCreate}
-            >
-              创建知识库
-            </Button>
-          </Space>
-        </div>
+  const handleDelete = async (id: string) => {
+    try {
+      await api.deleteKnowledgeBase(id);
+      message.success('删除成功');
+      fetchKnowledgeBases();
+    } catch (error) {
+      message.error('删除失败');
+    }
+  };
 
-        <Card>
+  const extra = (
+    <Space>
+      <Button
+        icon={<SyncOutlined />}
+        onClick={fetchKnowledgeBases}
+        loading={loading}
+      >
+        刷新
+      </Button>
+      <Button
+        type="primary"
+        icon={<PlusOutlined />}
+        onClick={() => router.push('/knowledge/create')}
+      >
+        创建知识库
+      </Button>
+    </Space>
+  );
+
+  return (
+    <DashboardLayout
+      title="知识库管理"
+      subtitle="创建和管理您的业务知识库"
+      extra={extra}
+    >
+      <div>
+        <Row gutter={[24, 24]}>
+          <Col xs={24} sm={8}>
+            <div className={styles.statsCard}>
+              <Statistic
+                title="知识库总数"
+                value={knowledgeBases.length}
+                prefix={<BookOutlined />}
+              />
+            </div>
+          </Col>
+          <Col xs={24} sm={8}>
+            <div className={styles.statsCard}>
+              <Statistic
+                title="文档总数"
+                value={knowledgeBases.reduce((sum, kb) => sum + kb.documents_count, 0)}
+                prefix={<FileTextOutlined />}
+              />
+            </div>
+          </Col>
+          <Col xs={24} sm={8}>
+            <div className={styles.statsCard}>
+              <Statistic
+                title="活跃知识库"
+                value={knowledgeBases.filter(kb => kb.status === 'active').length}
+                prefix={<TeamOutlined />}
+              />
+            </div>
+          </Col>
+        </Row>
+
+        <div className={styles.knowledgeTable}>
           <Table
             columns={columns}
             dataSource={knowledgeBases}
             rowKey="id"
-            pagination={false}
+            loading={loading}
+            pagination={{
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total) => `共 ${total} 条`,
+            }}
           />
-        </Card>
-
-        <Modal
-          title={selectedKnowledgeBase ? '编辑知识库' : '创建知识库'}
-          open={isModalVisible}
-          onCancel={() => setIsModalVisible(false)}
-          footer={null}
-          width={600}
-        >
-          <KnowledgeBaseForm
-            initialValues={selectedKnowledgeBase}
-            onSubmit={handleSubmit}
-            onCancel={() => setIsModalVisible(false)}
-          />
-        </Modal>
+        </div>
       </div>
     </DashboardLayout>
   );

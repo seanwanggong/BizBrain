@@ -61,4 +61,72 @@
 .emptyText {
   color: rgba(0, 0, 0, 0.45);
   font-size: 16px;
+}
+
+.knowledgeTable {
+  padding: 24px;
+}
+
+.knowledgeTable :global(.ant-table-wrapper) {
+  background: #fff;
+  border-radius: 8px;
+}
+
+.knowledgeTable :global(.ant-table-thead > tr > th) {
+  background: #fafafa;
+  font-weight: 500;
+}
+
+.knowledgeTable :global(.ant-table-row:hover) {
+  cursor: pointer;
+}
+
+.knowledgeTable :global(.ant-table-cell a) {
+  color: #1890ff;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.knowledgeTable :global(.ant-table-cell a:hover) {
+  color: #40a9ff;
+}
+
+.knowledgeTable :global(.ant-tag) {
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+.statsCard {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  height: 100%;
+}
+
+.statsCard :global(.ant-statistic-title) {
+  color: #8c8c8c;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.statsCard :global(.ant-statistic-content) {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .knowledgeTable {
+    padding: 16px;
+  }
+
+  .knowledgeTable :global(.ant-table) {
+    font-size: 14px;
+  }
+
+  .statsCard {
+    padding: 16px;
+  }
 } 

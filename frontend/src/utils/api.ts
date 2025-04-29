@@ -1,11 +1,13 @@
 import axios from 'axios';
 import { Agent, AgentCreate, AgentUpdate, AgentExecution } from '@/types/agent';
 import { User } from '@/types/user';
+import { request } from '@/utils/request';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -48,17 +50,24 @@ export const login = async (email: string, password: string) => {
     });
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.detail || '登录失败，请检查邮箱和密码');
+    if (error.response?.data?.detail) {
+      const detail = error.response.data.detail;
+      if (Array.isArray(detail)) {
+        const messages = detail.map(err => err.msg).join(', ');
+        throw new Error(messages);
+      }
+      throw new Error(detail);
+    }
+    throw new Error('登录失败，请检查邮箱和密码');
   }
 };
 
-export const register = async (email: string, password: string, name: string) => {
+export const register = async (username: string, email: string, password: string) => {
   try {
     const response = await api.post('/auth/register', {
+      username,
       email,
-      username: name,
-      password,
-      is_active: true
+      password
     });
     return response.data;
   } catch (error: any) {
@@ -110,8 +119,12 @@ export const getAgentExecution = async (agentId: number, executionId: number): P
 
 // Workflow API
 export const getWorkflows = async () => {
-  const response = await api.get('/workflows');
-  return response.data;
+  try {
+    const response = await api.get('/workflows');
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || '获取工作流列表失败');
+  }
 };
 
 export const getWorkflow = async (id: string) => {
@@ -120,18 +133,30 @@ export const getWorkflow = async (id: string) => {
 };
 
 export const createWorkflow = async (data: any) => {
-  const response = await api.post('/workflows', data);
-  return response.data;
+  try {
+    const response = await api.post('/workflows', data);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || '创建工作流失败');
+  }
 };
 
 export const updateWorkflow = async (id: string, data: any) => {
-  const response = await api.put(`/workflows/${id}`, data);
-  return response.data;
+  try {
+    const response = await api.put(`/workflows/${id}`, data);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || '更新工作流失败');
+  }
 };
 
 export const deleteWorkflow = async (id: string) => {
-  const response = await api.delete(`/workflows/${id}`);
-  return response.data;
+  try {
+    const response = await api.delete(`/workflows/${id}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || '删除工作流失败');
+  }
 };
 
 export const executeWorkflow = async (id: string, data: any) => {
@@ -140,9 +165,13 @@ export const executeWorkflow = async (id: string, data: any) => {
 };
 
 // Task API
-export const getTasks = async () => {
-  const response = await api.get('/tasks');
-  return response.data;
+export const getTasks = async (workflowId: string) => {
+  try {
+    const response = await api.get(`/workflows/${workflowId}/tasks`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || '获取任务列表失败');
+  }
 };
 
 export const getTask = async (id: string) => {
@@ -150,19 +179,31 @@ export const getTask = async (id: string) => {
   return response.data;
 };
 
-export const createTask = async (data: any) => {
-  const response = await api.post('/tasks', data);
-  return response.data;
+export const createTask = async (workflowId: string, data: any) => {
+  try {
+    const response = await api.post(`/workflows/${workflowId}/tasks`, data);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || '创建任务失败');
+  }
 };
 
-export const updateTask = async (id: string, data: any) => {
-  const response = await api.put(`/tasks/${id}`, data);
-  return response.data;
+export const updateTask = async (workflowId: string, taskId: string, data: any) => {
+  try {
+    const response = await api.put(`/workflows/${workflowId}/tasks/${taskId}`, data);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || '更新任务失败');
+  }
 };
 
-export const deleteTask = async (id: string) => {
-  const response = await api.delete(`/tasks/${id}`);
-  return response.data;
+export const deleteTask = async (workflowId: string, taskId: string) => {
+  try {
+    const response = await api.delete(`/workflows/${workflowId}/tasks/${taskId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || '删除任务失败');
+  }
 };
 
 // Execution API
@@ -183,14 +224,47 @@ export const getExecutionLogs = async (id: string) => {
 
 // User API
 export const getCurrentUser = async (): Promise<User> => {
-  const response = await api.get('/users/me');
-  return response.data;
+  try {
+    const response = await api.get('/auth/me');
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || '获取用户信息失败');
+  }
 };
 
 export const logout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
   window.location.href = '/login';
+};
+
+// Knowledge Base APIs
+export const getKnowledgeBases = () => {
+  return request('/api/v1/knowledge-bases');
+};
+
+export const getKnowledgeBase = (id: string) => {
+  return request(`/api/v1/knowledge-bases/${id}`);
+};
+
+export const createKnowledgeBase = (data: any) => {
+  return request('/api/v1/knowledge-bases', {
+    method: 'POST',
+    data,
+  });
+};
+
+export const updateKnowledgeBase = (id: string, data: any) => {
+  return request(`/api/v1/knowledge-bases/${id}`, {
+    method: 'PUT',
+    data,
+  });
+};
+
+export const deleteKnowledgeBase = (id: string) => {
+  return request(`/api/v1/knowledge-bases/${id}`, {
+    method: 'DELETE',
+  });
 };
 
 export default api; 

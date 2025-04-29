@@ -1,10 +1,31 @@
-.dashboard {
+.dashboardLayout {
+  min-height: 100vh;
+  background: #f0f2f5;
+}
+
+.content {
   padding: 24px;
+  margin: 24px;
+  background: #fff;
+  border-radius: 8px;
+  min-height: calc(100vh - 112px);
+}
+
+.dashboard {
+  width: 100%;
 }
 
 .statCard {
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.quickActions {
+  margin-top: 24px;
+}
+
+.activityList {
+  margin-top: 24px;
 }
 
 .quickAction {
@@ -17,11 +38,6 @@
 
 .quickAction:hover {
   background-color: #f5f5f5;
-}
-
-.activityList {
-  max-height: 400px;
-  overflow-y: auto;
 }
 
 .activityItem {

@@ -1,22 +1,23 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, JSON, DateTime
+from sqlalchemy import Column, String, Boolean, ForeignKey, JSON, DateTime, text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+import uuid
 from ..core.database import Base
 
 
 class Workflow(Base):
     __tablename__ = "workflows"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    description = Column(String, nullable=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text('gen_random_uuid()'))
+    name = Column(String(100), index=True)
+    description = Column(String(500), nullable=True)
     config = Column(JSON, nullable=True)  # 工作流配置
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'))
+    updated_at = Column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'), onupdate=text('CURRENT_TIMESTAMP'))
     
     # 外键关联
-    user_id = Column(String, ForeignKey("users.id"))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     user = relationship("User", back_populates="workflows")
     
     # 工作流执行历史

@@ -1,22 +1,30 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
 import { ConfigProvider, Layout } from 'antd';
-import 'antd/dist/antd.min.css';
+import { StyleProvider, createCache, extractStyle } from '@ant-design/cssinjs';
 import '@/styles/globals.css';
-import AppHeader from '@/components/Header';
-import { useRouter } from 'next/router';
+import '@/styles/antd.css';
 import 'reactflow/dist/style.css';
 import '@/styles/reactflow-overrides.css';
-import zhCN from 'antd/locale/zh_CN';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { UserProvider } from '@/contexts/UserContext';
+import AppLayout from '@/components/Layout';
+import 'antd/dist/reset.css';
 
-const { Content, Footer } = Layout;
+const publicPaths = ['/login', '/register', '/', '/docs'];
 
-const publicPaths = ['/login', '/register'];
-
-export default function App({ Component, pageProps, router }: AppProps) {
+function App({ Component, pageProps, router }: AppProps) {
   const isPublicPath = publicPaths.includes(router.pathname);
+  const cache = useMemo(() => createCache(), []);
+
+  const content = isPublicPath ? (
+    <Component {...pageProps} />
+  ) : (
+    <ProtectedRoute>
+      <Component {...pageProps} />
+    </ProtectedRoute>
+  );
 
   return (
     <>
@@ -25,39 +33,27 @@ export default function App({ Component, pageProps, router }: AppProps) {
         <meta name="description" content="BizBrain - 企业级AI Agent协作平台" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
+        <style id="antd" dangerouslySetInnerHTML={{ __html: extractStyle(cache, true) }} />
       </Head>
-      <ConfigProvider
-        locale={zhCN}
-        theme={{
-          token: {
-            colorPrimary: '#1890ff',
-          },
-        }}
-      >
-        <Layout>
-          <AppHeader />
-          <Content style={{ 
-            minHeight: 'calc(100vh - 64px - 70px)',
-            paddingTop: 64
-          }}>
-            {isPublicPath ? (
-              <Component {...pageProps} />
+      <StyleProvider cache={cache} hashPriority="high">
+        <ConfigProvider
+          theme={{
+            token: {
+              colorPrimary: '#1890ff',
+            },
+          }}
+        >
+          <UserProvider>
+            {router.pathname === '/login' || router.pathname === '/register' ? (
+              content
             ) : (
-              <ProtectedRoute>
-                <Component {...pageProps} />
-              </ProtectedRoute>
+              <AppLayout>{content}</AppLayout>
             )}
-          </Content>
-          <Footer style={{ 
-            textAlign: 'center',
-            background: '#f5f5f5',
-            padding: '24px 50px',
-            height: 70
-          }}>
-            BizBrain ©{new Date().getFullYear()} - AI Agent协作平台
-          </Footer>
-        </Layout>
-      </ConfigProvider>
+          </UserProvider>
+        </ConfigProvider>
+      </StyleProvider>
     </>
   );
-} 
+}
+
+export default App; 

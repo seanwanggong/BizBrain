@@ -1,0 +1,53 @@
+.container {
+  padding: 24px;
+  min-height: calc(100vh - 64px - 70px);
+  background: #f0f2f5;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.title {
+  margin: 0 !important;
+  color: #262626;
+}
+
+.subtitle {
+  display: block;
+  margin-top: 8px;
+  color: #8c8c8c;
+}
+
+.extra {
+  display: flex;
+  gap: 12px;
+}
+
+.content {
+  min-height: calc(100vh - 64px - 70px - 96px);
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .extra {
+    width: 100%;
+    justify-content: flex-start;
+  }
+} 

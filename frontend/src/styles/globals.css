@@ -34,7 +34,7 @@ a {
 }
 
 .ant-layout-header {
-  background: #fff;
+  background: #fff !important;
   padding: 0 24px;
   display: flex;
   align-items: center;
@@ -211,4 +211,10 @@ a {
 
 .mt-16 {
   margin-top: 16px;
+}
+
+/* 确保覆盖所有可能的类名前缀 */
+:where(.css-dev-only-do-not-override-1giffqd).ant-layout-header,
+:where(.css-dev-only-do-not-override-*).ant-layout-header {
+  background: #fff !important;
 } 

@@ -1,6 +1,79 @@
+.header {
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 0 50px;
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #1890ff 0%, #722ed1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  cursor: pointer;
+  margin-right: 48px;
+}
+
+.mainMenu {
+  flex: 1;
+  border: none;
+  background: transparent;
+  line-height: 64px;
+}
+
+.mainMenu :global(.ant-menu-item) {
+  padding: 0 20px;
+  margin: 0 4px;
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+}
+
+.userDropdown {
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  background: #1890ff;
+}
+
+.username {
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.authButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.loginButton {
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.registerButton {
+  margin-left: 8px;
+}
+
 .menuItem {
   background: transparent !important;
   color: #000 !important;
+  font-size: 14px;
 }
 
 .menuItem:hover {
@@ -11,4 +84,23 @@
 .menuItemSelected {
   background: transparent !important;
   color: #000 !important;
+}
+
+.userDropdown:hover {
+  background: rgba(0, 0, 0, 0.025);
+}
+
+.userDropdown span {
+  margin-left: 8px;
+  font-size: 14px;
+}
+
+.loginButton:hover {
+  color: #40a9ff;
+  background: rgba(24, 144, 255, 0.1);
+}
+
+.registerButton:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
 } 

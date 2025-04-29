@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, JSON, ForeignKey, DateTime, Enum, Table
+from sqlalchemy import Column, String, JSON, ForeignKey, DateTime, Enum, Table, text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+import uuid
 from ..core.database import Base
 import enum
 from datetime import datetime
@@ -27,8 +28,8 @@ class TaskStatus(str, enum.Enum):
 task_dependencies = Table(
     "task_dependencies",
     Base.metadata,
-    Column("task_id", Integer, ForeignKey("workflow_tasks.id"), primary_key=True),
-    Column("dependency_id", Integer, ForeignKey("workflow_tasks.id"), primary_key=True)
+    Column("task_id", UUID(as_uuid=True), ForeignKey("workflow_tasks.id"), primary_key=True),
+    Column("dependency_id", UUID(as_uuid=True), ForeignKey("workflow_tasks.id"), primary_key=True)
 )
 
 
@@ -36,21 +37,21 @@ class WorkflowTask(Base):
     """工作流任务模型"""
     __tablename__ = "workflow_tasks"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    description = Column(String, nullable=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text('gen_random_uuid()'))
+    name = Column(String(100), index=True)
+    description = Column(String(500), nullable=True)
     task_type = Column(Enum(TaskType))
     config = Column(JSON)  # 任务配置
     status = Column(Enum(TaskStatus), default=TaskStatus.PENDING)
     result = Column(JSON, nullable=True)
-    error_message = Column(String, nullable=True)
+    error_message = Column(String(500), nullable=True)
     started_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'))
+    updated_at = Column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'), onupdate=text('CURRENT_TIMESTAMP'))
 
     # 外键关联
-    workflow_id = Column(Integer, ForeignKey("workflows.id"))
+    workflow_id = Column(UUID(as_uuid=True), ForeignKey("workflows.id"))
     workflow = relationship("Workflow", back_populates="tasks")
     
     # 任务依赖关系

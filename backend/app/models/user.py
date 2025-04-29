@@ -1,20 +1,24 @@
-from sqlalchemy import Column, String, Boolean, DateTime
-from sqlalchemy.sql import func
+from datetime import datetime
+from sqlalchemy import Boolean, Column, String, DateTime, text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from ..core.database import Base
+from app.db.base_class import Base
+import uuid
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(String, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    username = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text('gen_random_uuid()'))
+    username = Column(String(50), unique=True, index=True)
+    email = Column(String(100), unique=True, index=True)
+    hashed_password = Column(String(255))
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'))
+    updated_at = Column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'), onupdate=datetime.utcnow)
 
-    # 关联工作流
-    workflows = relationship("Workflow", back_populates="user", lazy="selectin")
-    workflow_executions = relationship("WorkflowExecution", back_populates="user", lazy="selectin") 
+    # 关联
+    workflows = relationship("Workflow", back_populates="user")
+    workflow_executions = relationship("WorkflowExecution", back_populates="user")
+    knowledge_bases = relationship("KnowledgeBase", back_populates="user")
+    documents = relationship("Document", back_populates="user") 

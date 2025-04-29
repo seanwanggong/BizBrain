@@ -1,100 +1,110 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, Card, message } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
+import { useState } from 'react';
+import { Card, Form, Input, Button, message } from 'antd';
 import { useRouter } from 'next/router';
-import { register } from '@/utils/api';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
+import Layout from '@/components/Layout';
+import styles from '@/styles/Auth.module.css';
 
-const RegisterPage = () => {
-  const router = useRouter();
+interface RegisterForm {
+  email: string;
+  username: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
+  const { register } = useAuth();
+  const router = useRouter();
 
-  const onFinish = async (values: { name: string; email: string; password: string }) => {
+  const onFinish = async (values: RegisterForm) => {
+    if (values.password !== values.confirmPassword) {
+      message.error('两次输入的密码不一致');
+      return;
+    }
+
+    setLoading(true);
     try {
-      setLoading(true);
-      await register(values.email, values.password, values.name);
-      message.success('注册成功，请登录');
+      await register(values.username, values.email, values.password);
+      message.success('注册成功');
       router.push('/login');
-    } catch (error: any) {
-      message.error(error.message || '注册失败，请稍后重试');
+    } catch (error) {
+      message.error('注册失败：' + (error as Error).message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      minHeight: '100vh',
-      background: '#f0f2f5'
-    }}>
-      <Card style={{ width: 400, padding: '24px' }}>
-        <h1 style={{ textAlign: 'center', marginBottom: '24px' }}>注册</h1>
-        <Form
-          name="register"
-          onFinish={onFinish}
-          size="large"
-        >
-          <Form.Item
-            name="name"
-            rules={[{ required: true, message: '请输入姓名' }]}
+    <Layout>
+      <div className={styles.container}>
+        <Card title="注册" className={styles.card}>
+          <Form
+            name="register"
+            onFinish={onFinish}
+            layout="vertical"
+            requiredMark={false}
           >
-            <Input prefix={<UserOutlined />} placeholder="姓名" />
-          </Form.Item>
+            <Form.Item
+              name="email"
+              label="邮箱"
+              rules={[
+                { required: true, message: '请输入邮箱' },
+                { type: 'email', message: '请输入有效的邮箱地址' }
+              ]}
+            >
+              <Input size="large" placeholder="请输入邮箱" />
+            </Form.Item>
 
-          <Form.Item
-            name="email"
-            rules={[
-              { required: true, message: '请输入邮箱' },
-              { type: 'email', message: '请输入有效的邮箱地址' }
-            ]}
-          >
-            <Input prefix={<MailOutlined />} placeholder="邮箱" />
-          </Form.Item>
+            <Form.Item
+              name="username"
+              label="用户名"
+              rules={[{ required: true, message: '请输入用户名' }]}
+            >
+              <Input size="large" placeholder="请输入用户名" />
+            </Form.Item>
 
-          <Form.Item
-            name="password"
-            rules={[
-              { required: true, message: '请输入密码' },
-              { min: 6, message: '密码长度不能少于6位' }
-            ]}
-          >
-            <Input.Password prefix={<LockOutlined />} placeholder="密码" />
-          </Form.Item>
+            <Form.Item
+              name="password"
+              label="密码"
+              rules={[
+                { required: true, message: '请输入密码' },
+                { min: 6, message: '密码长度至少为6个字符' }
+              ]}
+            >
+              <Input.Password size="large" placeholder="请输入密码" />
+            </Form.Item>
 
-          <Form.Item
-            name="confirm"
-            dependencies={['password']}
-            rules={[
-              { required: true, message: '请确认密码' },
-              ({ getFieldValue }) => ({
-                validator(_, value) {
-                  if (!value || getFieldValue('password') === value) {
-                    return Promise.resolve();
-                  }
-                  return Promise.reject(new Error('两次输入的密码不一致'));
-                },
-              }),
-            ]}
-          >
-            <Input.Password prefix={<LockOutlined />} placeholder="确认密码" />
-          </Form.Item>
+            <Form.Item
+              name="confirmPassword"
+              label="确认密码"
+              rules={[
+                { required: true, message: '请确认密码' },
+                { min: 6, message: '密码长度至少为6个字符' }
+              ]}
+            >
+              <Input.Password size="large" placeholder="请再次输入密码" />
+            </Form.Item>
 
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} block>
-              注册
-            </Button>
-          </Form.Item>
-
-          <div style={{ textAlign: 'center' }}>
-            已有账号？ <Link href="/login">立即登录</Link>
+            <Form.Item>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                block
+                className={styles.submitButton}
+              >
+                注册
+              </Button>
+            </Form.Item>
+          </Form>
+          
+          <div className={styles.links}>
+            已有账号？<Link href="/login">立即登录</Link>
           </div>
-        </Form>
-      </Card>
-    </div>
+        </Card>
+      </div>
+    </Layout>
   );
-};
-
-export default RegisterPage; 
+} 

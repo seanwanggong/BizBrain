@@ -1,0 +1,102 @@
+.layout {
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  background: #fff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  height: 64px;
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+}
+
+.brand {
+  margin-right: 40px;
+}
+
+.brand a {
+  color: #1890ff;
+  font-size: 20px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.menu {
+  flex: 1;
+  border-bottom: none;
+  background: transparent;
+}
+
+.menu :global(.ant-menu-item) {
+  padding: 0 20px;
+  font-size: 15px;
+}
+
+.menu :global(.ant-menu-item a) {
+  color: #595959;
+}
+
+.menu :global(.ant-menu-item-selected a) {
+  color: #1890ff;
+}
+
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.userInfo:hover {
+  background-color: rgba(0, 0, 0, 0.025);
+}
+
+.userInfo span {
+  color: #595959;
+}
+
+.loginButton {
+  color: #595959;
+}
+
+.registerButton {
+  height: 32px;
+}
+
+.content {
+  padding: 88px 24px 24px;
+  min-height: calc(100vh - 64px);
+  background: #f0f2f5;
+}
+
+.contentInner {
+  background: #fff;
+  border-radius: 8px;
+  min-height: 280px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.footer {
+  text-align: center;
+  padding: 24px;
+  color: #595959;
+  background: #fff;
+}
+
+.footerHeart {
+  color: #ff4d4f;
+  margin: 0 4px;
+} 

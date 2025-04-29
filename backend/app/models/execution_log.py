@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, String, JSON, DateTime, ForeignKey, Enum, text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from ..core.database import Base
+import uuid
 import enum
 
 
@@ -17,12 +19,12 @@ class ExecutionLog(Base):
     """执行日志模型"""
     __tablename__ = "execution_logs"
 
-    id = Column(Integer, primary_key=True, index=True)
-    execution_id = Column(Integer, ForeignKey("workflow_executions.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text('gen_random_uuid()'))
+    execution_id = Column(UUID(as_uuid=True), ForeignKey("workflow_executions.id"), nullable=False)
     level = Column(Enum(LogLevel), default=LogLevel.INFO, nullable=False)
-    message = Column(String, nullable=False)
+    message = Column(String(500), nullable=False)
     log_metadata = Column(JSON, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'))
 
     # 关系
     execution = relationship("WorkflowExecution", back_populates="execution_logs") 

@@ -1,13 +1,30 @@
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.engine import URL
+from sqlalchemy.dialects import postgresql
 from ..core.config import settings
+
+# Create PostgreSQL URL
+database_url = URL.create(
+    drivername="postgresql+psycopg2",
+    username=settings.POSTGRES_USER,
+    password=settings.POSTGRES_PASSWORD,
+    host=settings.POSTGRES_SERVER,
+    port=settings.POSTGRES_PORT,
+    database=settings.POSTGRES_DB
+)
 
 # 创建引擎
 engine = create_engine(
-    settings.DATABASE_URL,
+    database_url,
     echo=settings.DEBUG,
-    connect_args={"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
+    pool_pre_ping=True,
+    pool_size=5,
+    max_overflow=10,
+    future=True,
+    connect_args={
+        "options": "-c timezone=utc"
+    }
 )
 
 # 创建会话工厂

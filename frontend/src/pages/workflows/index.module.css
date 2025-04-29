@@ -1,0 +1,44 @@
+.workflowsTable {
+  padding: 24px;
+}
+
+.workflowsTable :global(.ant-table-wrapper) {
+  background: #fff;
+  border-radius: 8px;
+}
+
+.workflowsTable :global(.ant-table-thead > tr > th) {
+  background: #fafafa;
+  font-weight: 500;
+}
+
+.workflowsTable :global(.ant-table-row:hover) {
+  cursor: pointer;
+}
+
+.workflowsTable :global(.ant-table-cell a) {
+  color: #1890ff;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.workflowsTable :global(.ant-table-cell a:hover) {
+  color: #40a9ff;
+}
+
+.workflowsTable :global(.ant-tag) {
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .workflowsTable {
+    padding: 16px;
+  }
+
+  .workflowsTable :global(.ant-table) {
+    font-size: 14px;
+  }
+} 

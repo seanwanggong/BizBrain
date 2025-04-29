@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, String, JSON, DateTime, ForeignKey, Enum, text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from ..core.database import Base
-from datetime import datetime
+import uuid
 from enum import Enum as PyEnum
 
 class ExecutionStatus(PyEnum):
@@ -15,17 +16,17 @@ class WorkflowExecution(Base):
     """工作流执行模型"""
     __tablename__ = "workflow_executions"
 
-    id = Column(Integer, primary_key=True, index=True)
-    workflow_id = Column(Integer, ForeignKey("workflows.id"), nullable=False)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text('gen_random_uuid()'))
+    workflow_id = Column(UUID(as_uuid=True), ForeignKey("workflows.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     status = Column(Enum(ExecutionStatus), default=ExecutionStatus.PENDING, nullable=False)
     input_data = Column(JSON, nullable=True)
     result = Column(JSON, nullable=True)
-    error_message = Column(String, nullable=True)
-    started_at = Column(DateTime, nullable=True)
-    completed_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    error_message = Column(String(500), nullable=True)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'), onupdate=text('CURRENT_TIMESTAMP'), nullable=False)
 
     # 关系
     workflow = relationship("Workflow", back_populates="executions")

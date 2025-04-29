@@ -1,10 +1,8 @@
 import React from 'react';
-import { Card, Row, Col, Statistic, List, Typography, Button } from 'antd';
+import { Row, Col, Statistic, List, Button } from 'antd';
 import { ArrowUpOutlined, RobotOutlined, ApiOutlined, BookOutlined } from '@ant-design/icons';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
-import styles from '@/styles/Dashboard.module.css';
-
-const { Title } = Typography;
+import styles from './index.module.css';
 
 const DashboardPage = () => {
   // 示例数据
@@ -21,58 +19,58 @@ const DashboardPage = () => {
   ];
 
   return (
-    <DashboardLayout>
+    <DashboardLayout 
+      title="控制台" 
+      subtitle="查看和管理您的所有资源"
+    >
       <div className={styles.dashboard}>
-        <Title level={2}>工作台</Title>
-        
         <Row gutter={[24, 24]}>
-          {/* 统计数据 */}
-          <Col span={6}>
-            <Card>
+          <Col xs={24} sm={12} lg={6}>
+            <div className={styles.statsCard}>
               <Statistic
                 title="Agent总数"
                 value={12}
                 prefix={<RobotOutlined />}
                 valueStyle={{ color: '#3f8600' }}
               />
-            </Card>
+            </div>
           </Col>
-          <Col span={6}>
-            <Card>
+          <Col xs={24} sm={12} lg={6}>
+            <div className={styles.statsCard}>
               <Statistic
                 title="今日对话"
                 value={156}
                 prefix={<ArrowUpOutlined />}
                 valueStyle={{ color: '#3f8600' }}
               />
-            </Card>
+            </div>
           </Col>
-          <Col span={6}>
-            <Card>
+          <Col xs={24} sm={12} lg={6}>
+            <div className={styles.statsCard}>
               <Statistic
                 title="工作流数"
                 value={8}
                 prefix={<ApiOutlined />}
               />
-            </Card>
+            </div>
           </Col>
-          <Col span={6}>
-            <Card>
+          <Col xs={24} sm={12} lg={6}>
+            <div className={styles.statsCard}>
               <Statistic
                 title="知识库数量"
                 value={5}
                 prefix={<BookOutlined />}
               />
-            </Card>
+            </div>
           </Col>
         </Row>
 
-        <Row gutter={[24, 24]} style={{ marginTop: '24px' }}>
-          {/* 快捷操作 */}
-          <Col span={12}>
-            <Card title="快捷操作">
+        <Row gutter={[24, 24]} className={styles.section}>
+          <Col xs={24} lg={12}>
+            <h3 className={styles.sectionTitle}>快捷操作</h3>
+            <div className={styles.actionButton}>
               <List
-                grid={{ gutter: 16, column: 3 }}
+                grid={{ gutter: 16, xs: 1, sm: 2, md: 3 }}
                 dataSource={quickActions}
                 renderItem={item => (
                   <List.Item>
@@ -88,12 +86,12 @@ const DashboardPage = () => {
                   </List.Item>
                 )}
               />
-            </Card>
+            </div>
           </Col>
 
-          {/* 最近活动 */}
-          <Col span={12}>
-            <Card title="最近活动">
+          <Col xs={24} lg={12}>
+            <h3 className={styles.sectionTitle}>最近活动</h3>
+            <div className={styles.listWrapper}>
               <List
                 dataSource={recentActivities}
                 renderItem={item => (
@@ -105,7 +103,7 @@ const DashboardPage = () => {
                   </List.Item>
                 )}
               />
-            </Card>
+            </div>
           </Col>
         </Row>
       </div>

@@ -1,9 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import settings
 from app.api.v1.api import api_router
-from .core.database import engine, Base
-from .core.init_db import init_db
+from app.core.config import settings
+from app.core.init_db import init_db
 
 # 初始化数据库
 init_db()
@@ -11,27 +10,24 @@ init_db()
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description=settings.DESCRIPTION,
-    docs_url=settings.DOCS_URL,
-    redoc_url=settings.REDOC_URL,
-    openapi_url=settings.OPENAPI_URL,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# Set up CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
-    allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
-)
+# 设置CORS
+if settings.BACKEND_CORS_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-# Include API router
 app.include_router(api_router)
 
 @app.get("/")
 async def root():
-    return {"message": f"Welcome to {settings.PROJECT_NAME} API"}
+    return {}
 
 # Include routers
 from .api.v1.endpoints import auth, agents, workflows, tasks, executions

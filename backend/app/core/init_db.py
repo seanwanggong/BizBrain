@@ -1,24 +1,24 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from app.db.base import Base
+from app.core.database import engine
 from app.core.config import settings
-from app.core.database import Base
 from app.models.user import User
 from app.models.workflow import Workflow
 from app.models.workflow_task import WorkflowTask
 from app.models.workflow_execution import WorkflowExecution
 from app.models.task_log import TaskLog
 from app.models.execution_log import ExecutionLog
+import uuid
 
-def init_db():
+def init_db() -> None:
     """初始化数据库"""
-    # 创建引擎
-    engine = create_engine(settings.DATABASE_URL)
-    
     # 创建所有表
+    Base.metadata.drop_all(bind=engine)  # 先删除所有表
     Base.metadata.create_all(bind=engine)
     
     # 创建会话
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    SessionLocal = Session(bind=engine)
     db = SessionLocal()
     
     try:
@@ -27,7 +27,7 @@ def init_db():
         if not admin:
             # 创建超级用户
             admin = User(
-                id="admin",
+                id=uuid.uuid4(),
                 email="admin@example.com",
                 username="admin",
                 hashed_password="$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",  # "secret"
@@ -37,6 +37,10 @@ def init_db():
             db.add(admin)
             db.commit()
             print("Created admin user")
+            
+        # 创建扩展
+        db.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'))
+        db.commit()
     except Exception as e:
         print(f"Error initializing database: {e}")
         db.rollback()

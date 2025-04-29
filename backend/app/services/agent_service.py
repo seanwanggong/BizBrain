@@ -22,6 +22,13 @@ import re
 import base64
 import io
 import matplotlib.pyplot as plt
+from sqlalchemy.sql import text
+from sqlalchemy.orm import Session
+from langchain.agents import Tool, AgentExecutor, LLMSingleActionAgent
+from langchain.memory import ConversationBufferMemory
+from langchain.prompts import StringPromptTemplate
+from langchain.chains import LLMChain
+from langchain.chat_models import ChatOpenAI
 
 class AgentService:
     def __init__(self, db: Session):
@@ -326,20 +333,16 @@ class AgentService:
         # 添加数据库查询工具
         def execute_sql_query(query: str) -> str:
             try:
-                # 这里使用SQLite作为示例，实际项目中应该使用配置的数据库连接
-                conn = sqlite3.connect(':memory:')
-                cursor = conn.cursor()
-                cursor.execute(query)
+                # Use the existing database session
+                result = self.db.execute(text(query))
                 if query.strip().upper().startswith('SELECT'):
-                    results = cursor.fetchall()
+                    results = [dict(row) for row in result]
                     return json.dumps(results)
                 else:
-                    conn.commit()
+                    self.db.commit()
                     return "Query executed successfully"
             except Exception as e:
                 return f"Error executing SQL query: {str(e)}"
-            finally:
-                conn.close()
         
         tools.append(
             Tool(

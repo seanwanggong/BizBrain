@@ -23,4 +23,49 @@
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.agentsTable {
+  padding: 24px;
+}
+
+.agentsTable :global(.ant-table-wrapper) {
+  background: #fff;
+  border-radius: 8px;
+}
+
+.agentsTable :global(.ant-table-thead > tr > th) {
+  background: #fafafa;
+  font-weight: 500;
+}
+
+.agentsTable :global(.ant-table-row:hover) {
+  cursor: pointer;
+}
+
+.agentsTable :global(.ant-table-cell a) {
+  color: #1890ff;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.agentsTable :global(.ant-table-cell a:hover) {
+  color: #40a9ff;
+}
+
+.agentsTable :global(.ant-tag) {
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .agentsTable {
+    padding: 16px;
+  }
+
+  .agentsTable :global(.ant-table) {
+    font-size: 14px;
+  }
 } 
