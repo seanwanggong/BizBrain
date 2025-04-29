@@ -1,8 +1,10 @@
-from sqlalchemy import Column, String, Boolean, ForeignKey, JSON, DateTime, text
+from sqlalchemy import Column, String, Boolean, ForeignKey, JSON, DateTime, text, Integer, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
 from ..core.database import Base
+from .workflow_execution import WorkflowExecution, ExecutionStatus
+from .workflow_task import WorkflowTask, TaskStatus
 
 
 class Workflow(Base):

@@ -22,11 +22,4 @@ class Base:
     # Generate __tablename__ automatically
     @declared_attr
     def __tablename__(cls) -> str:
-        return cls.__name__.lower()
-
-    # Add PostgreSQL-specific configuration
-    __table_args__ = {
-        'postgresql_using': 'btree',
-        'postgresql_with_oids': False,
-        'postgresql_identity': True
-    } 
+        return cls.__name__.lower() 

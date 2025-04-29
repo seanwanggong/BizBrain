@@ -1,26 +1,22 @@
-version: '3.8'
-
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      args:
-        ENVIRONMENT: ${ENVIRONMENT:-development}
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend:/app
-      - ./backend/.venv:/opt/pysetup/.venv
-      - ~/.cache/pip:/root/.cache/pip
     environment:
-      - ENVIRONMENT=${ENVIRONMENT:-development}
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/bizbrain
       - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=your-secret-key-here
+      - OPENAI_API_KEY=your-openai-api-key-here
       - PYTHONPATH=/app
     depends_on:
       - db
       - redis
+    volumes:
+      - ./backend:/app
+      - ./backend/app:/app/app
 
   db:
     image: postgres:15

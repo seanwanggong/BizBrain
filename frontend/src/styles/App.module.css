@@ -1,0 +1,33 @@
+.pageContainer {
+  position: relative;
+  min-height: calc(100vh - 64px - 70px); /* 减去 header 和 footer 的高度 */
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.pageTransition {
+  opacity: 0;
+}
+
+/* 添加一个微妙的加载指示器 */
+.pageContainer::after {
+  content: '';
+  position: fixed;
+  top: 64px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(to right, #1890ff, #40a9ff);
+  transform: translateX(-100%);
+  animation: loading 0.5s ease-in-out;
+  z-index: 1000;
+}
+
+@keyframes loading {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+} 

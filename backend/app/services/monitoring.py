@@ -2,11 +2,10 @@ from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 from sqlalchemy import func, desc
 from sqlalchemy.orm import Session
-from ..models.task_log import TaskLog
-from ..models.workflow_task import TaskStatus, TaskType
-from ..models.workflow_execution import ExecutionStatus
-from app.models.workflow_task import WorkflowTask
-from app.models.workflow_execution import WorkflowExecution
+
+from app.models.task_log import TaskLog
+from app.models.workflow_task import WorkflowTask, TaskStatus, TaskType
+from app.models.workflow_execution import WorkflowExecution, ExecutionStatus
 from app.models.execution_log import ExecutionLog
 from app.schemas.monitoring import (
     TaskExecutionStats,
@@ -15,6 +14,7 @@ from app.schemas.monitoring import (
     SystemStats,
     MonitoringStats
 )
+from app.schemas.workflow_execution import WorkflowExecutionCreate, WorkflowExecutionUpdate
 
 class MonitoringService:
     def __init__(self, db: Session):

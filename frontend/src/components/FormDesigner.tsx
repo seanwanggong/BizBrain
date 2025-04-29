@@ -1,23 +1,15 @@
 import React, { useState } from 'react';
 import { Form, Input, Select, Button, Space, Card, Modal, Tooltip, Switch } from 'antd';
 import { PlusOutlined, DeleteOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
+import { FormField, FormSchema } from '@/types/workflow';
 import styles from '@/styles/FormDesigner.module.css';
 
 const { TextArea } = Input;
 const { Option } = Select;
 
-interface FormField {
-  name: string;
-  label: string;
-  type: string;
-  required: boolean;
-  placeholder?: string;
-  options?: Array<{ label: string; value: string }>;
-}
-
 interface FormDesignerProps {
-  onChange: (schema: { fields: FormField[] }) => void;
-  initialValue?: { fields: FormField[] };
+  onChange: (schema: FormSchema) => void;
+  initialValue?: FormSchema;
 }
 
 const FIELD_TYPES = [
@@ -39,6 +31,7 @@ const FormDesigner: React.FC<FormDesignerProps> = ({ onChange, initialValue }) =
 
   const handleAddField = () => {
     const newField: FormField = {
+      id: `field_${Date.now()}`,
       name: `field_${fields.length + 1}`,
       label: '',
       type: 'text',

@@ -8,6 +8,7 @@ from .config import settings
 from ..services.user_service import UserService
 from ..schemas.user import TokenPayload
 from ..core.database import SessionLocal
+from ..models.user import User
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/auth/login"

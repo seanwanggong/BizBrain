@@ -28,7 +28,7 @@ from langchain.agents import Tool, AgentExecutor, LLMSingleActionAgent
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import StringPromptTemplate
 from langchain.chains import LLMChain
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 
 class AgentService:
     def __init__(self, db: Session):

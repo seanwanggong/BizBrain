@@ -1,10 +1,10 @@
 :root {
   --primary-color: #1890ff;
   --secondary-color: #52c41a;
-  --text-color: #262626;
-  --text-color-secondary: #8c8c8c;
+  --text-color: rgba(0, 0, 0, 0.85);
+  --text-color-secondary: rgba(0, 0, 0, 0.45);
   --background-color: #f0f2f5;
-  --card-background: #ffffff;
+  --card-background: #fff;
   --border-color: #f0f0f0;
 }
 
@@ -12,9 +12,7 @@ html,
 body {
   padding: 0;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-  color: var(--text-color);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   background-color: var(--background-color);
 }
 
@@ -30,27 +28,48 @@ a {
 /* Layout */
 .ant-layout {
   min-height: 100vh;
-  background-color: var(--background-color);
+  background-color: var(--background-color) !important;
 }
 
-.ant-layout-header {
+/* 确保导航栏样式优先级最高 */
+.ant-layout-header,
+:where(.css-dev-only-do-not-override-1giffqd).ant-layout-header,
+:where(.css-dev-only-do-not-override-*).ant-layout-header,
+.ant-layout-header[class],
+.ant-layout-header[class][class] {
   background: #fff !important;
-  padding: 0 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: 64px !important;
+  line-height: 64px !important;
+  padding: 0 24px !important;
+  position: fixed !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+  transition: none !important;
+  -webkit-transition: none !important;
+  -moz-transition: none !important;
+  -o-transition: none !important;
 }
 
 .ant-layout-content {
-  padding: 24px;
-  width: 100%;
-  
+  padding: 24px !important;
+  width: 100% !important;
+  margin-top: 64px !important;
+  background-color: var(--background-color) !important;
+  transition: none !important;
+  -webkit-transition: none !important;
+  -moz-transition: none !important;
+  -o-transition: none !important;
 }
 
 .ant-layout-footer {
   text-align: center;
-  background: #fff;
+  background-color: var(--card-background) !important;
+  padding: 24px 50px !important;
 }
 
 .site-layout-content {
@@ -76,9 +95,9 @@ a {
 
 /* Cards */
 .ant-card {
-  background: var(--card-background);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background-color: var(--card-background) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
   margin-bottom: 24px;
   border: 1px solid var(--border-color);
 }
@@ -95,7 +114,7 @@ a {
 
 /* Typography */
 .ant-typography {
-  color: var(--text-color);
+  color: var(--text-color) !important;
 }
 
 .ant-typography h1,
@@ -107,6 +126,10 @@ a {
   font-weight: 600;
 }
 
+.ant-typography-secondary {
+  color: var(--text-color-secondary) !important;
+}
+
 /* Buttons */
 .ant-btn {
   border-radius: 4px;
@@ -114,13 +137,14 @@ a {
 }
 
 .ant-btn-primary {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
 }
 
-.ant-btn-primary:hover {
-  background: #40a9ff;
-  border-color: #40a9ff;
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+  background-color: #40a9ff !important;
+  border-color: #40a9ff !important;
 }
 
 /* Tables */
@@ -153,16 +177,26 @@ a {
 
 /* Navigation */
 .ant-menu {
-  background: transparent;
+  background: transparent !important;
+  border: none !important;
+}
+
+.ant-menu-horizontal {
+  border-bottom: none !important;
 }
 
 .ant-menu-item {
-  border-radius: 4px;
+  color: rgba(0, 0, 0, 0.85) !important;
 }
 
 .ant-menu-item-selected {
-  background: var(--primary-color);
-  color: white;
+  color: #1890ff !important;
+  background: transparent !important;
+}
+
+.ant-menu-item:hover {
+  color: #1890ff !important;
+  background: transparent !important;
 }
 
 /* Status Colors */
@@ -211,10 +245,4 @@ a {
 
 .mt-16 {
   margin-top: 16px;
-}
-
-/* 确保覆盖所有可能的类名前缀 */
-:where(.css-dev-only-do-not-override-1giffqd).ant-layout-header,
-:where(.css-dev-only-do-not-override-*).ant-layout-header {
-  background: #fff !important;
 } 

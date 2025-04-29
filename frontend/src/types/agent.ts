@@ -14,6 +14,17 @@ export interface Agent {
 
 export type AgentType = 'assistant' | 'expert' | 'task' | 'chain';
 
+export interface TemplateFormData {
+  industry: string;
+  role: string;
+  tone: string;
+  goal: string;
+  responsibilities: string;
+  focus: string;
+  principles: string;
+  additionalInfo?: string;
+}
+
 export interface AgentFormData {
   name: string;
   description: string;

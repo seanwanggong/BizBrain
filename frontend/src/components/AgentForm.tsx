@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Input, Select, InputNumber, Card, Button, Space, Tooltip, Typography, Row, Col, Divider } from 'antd';
 import { QuestionCircleOutlined, ThunderboltOutlined } from '@ant-design/icons';
-import { AgentFormData, AGENT_TYPES, MODEL_OPTIONS, TOOL_OPTIONS } from '@/types/agent';
+import { AgentFormData, TemplateFormData, AGENT_TYPES, MODEL_OPTIONS, TOOL_OPTIONS } from '@/types/agent';
 import styles from './AgentForm.module.css';
 
 const { TextArea } = Input;
@@ -21,7 +21,7 @@ const AgentForm: React.FC<AgentFormProps> = ({
   loading = false,
 }) => {
   const [form] = Form.useForm<AgentFormData>();
-  const [templateForm] = Form.useForm();
+  const [templateForm] = Form.useForm<TemplateFormData>();
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleSubmit = async () => {

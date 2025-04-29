@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
 from app.core.config import settings
 from app.core.init_db import init_db
+from app.api.v1.endpoints import docs
 
 # 初始化数据库
 init_db()
@@ -23,6 +24,7 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_headers=["*"],
     )
 
+app.include_router(docs.router, prefix=f"{settings.API_V1_STR}/docs", tags=["documentation"])
 app.include_router(api_router)
 
 @app.get("/")

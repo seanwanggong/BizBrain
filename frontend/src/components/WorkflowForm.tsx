@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Form, Input, Select, Button, Space, Card, Modal, message } from 'antd';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import FormDesigner from '@/components/FormDesigner';
+import { WorkflowFormData, WorkflowNode, FormSchema, NodeType } from '@/types/workflow';
 
 const { TextArea } = Input;
 const { Option } = Select;
 
 interface WorkflowFormProps {
-  initialValues?: any;
-  onSubmit: (values: any) => void;
+  initialValues?: Partial<WorkflowFormData>;
+  onSubmit: (values: WorkflowFormData) => void;
   onCancel: () => void;
   isEdit?: boolean;
 }
@@ -19,13 +20,13 @@ const WorkflowForm: React.FC<WorkflowFormProps> = ({
   onCancel,
   isEdit = false,
 }) => {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<WorkflowFormData>();
   const [formDesignerVisible, setFormDesignerVisible] = useState(false);
   const [currentNodeIndex, setCurrentNodeIndex] = useState<number | null>(null);
-  const [currentFormSchema, setCurrentFormSchema] = useState<any>(null);
+  const [currentFormSchema, setCurrentFormSchema] = useState<FormSchema | null>(null);
 
   // 监听节点类型变化
-  const handleNodeTypeChange = (index: number, value: string) => {
+  const handleNodeTypeChange = (index: number, value: NodeType) => {
     const nodes = form.getFieldValue('nodes');
     if (value === 'form') {
       nodes[index].config = {
@@ -49,7 +50,7 @@ const WorkflowForm: React.FC<WorkflowFormProps> = ({
     setFormDesignerVisible(true);
   };
 
-  const handleFormDesignerSubmit = (schema: any) => {
+  const handleFormDesignerSubmit = (schema: FormSchema) => {
     if (currentNodeIndex !== null) {
       const nodes = form.getFieldValue('nodes');
       nodes[currentNodeIndex].config = {
@@ -62,9 +63,9 @@ const WorkflowForm: React.FC<WorkflowFormProps> = ({
     setFormDesignerVisible(false);
   };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: WorkflowFormData) => {
     // 验证表单节点的配置
-    const hasInvalidFormNode = values.nodes.some((node: any, index: number) => {
+    const hasInvalidFormNode = values.nodes.some((node: WorkflowNode, index: number) => {
       if (node.type === 'form') {
         if (!node.config?.formSchema?.fields?.length) {
           message.error(`节点 ${index + 1} 的表单字段未配置`);
@@ -87,7 +88,7 @@ const WorkflowForm: React.FC<WorkflowFormProps> = ({
         form={form}
         layout="vertical"
         initialValues={initialValues || {
-          nodes: [{ type: 'start', name: '开始' }],
+          nodes: [{ type: 'start', name: '开始', config: {} }],
         }}
         onFinish={handleSubmit}
       >
@@ -142,7 +143,7 @@ const WorkflowForm: React.FC<WorkflowFormProps> = ({
                       >
                         <Select 
                           placeholder="请选择节点类型"
-                          onChange={(value) => handleNodeTypeChange(index, value)}
+                          onChange={(value: NodeType) => handleNodeTypeChange(index, value)}
                         >
                           <Option value="start">开始节点</Option>
                           <Option value="agent">Agent 节点</Option>
@@ -201,7 +202,7 @@ const WorkflowForm: React.FC<WorkflowFormProps> = ({
                 })}
                 <Button
                   type="dashed"
-                  onClick={() => add()}
+                  onClick={() => add({ type: 'action', name: '', config: {} })}
                   block
                   icon={<PlusOutlined />}
                 >

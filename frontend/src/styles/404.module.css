@@ -1,0 +1,33 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f0f2f5;
+}
+
+.content {
+  text-align: center;
+  padding: 40px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  font-size: 72px;
+  margin: 0;
+  color: #1890ff;
+}
+
+.subtitle {
+  font-size: 24px;
+  margin: 16px 0;
+  color: #333;
+}
+
+.description {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 24px;
+} 

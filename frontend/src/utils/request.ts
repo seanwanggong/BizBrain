@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import { message } from 'antd';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -63,14 +63,29 @@ instance.interceptors.response.use(
   }
 );
 
-export const request = async (url: string, options: any = {}) => {
+export async function request<T>(url: string, options: AxiosRequestConfig = {}): Promise<T> {
+  const token = localStorage.getItem('token');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+
   try {
-    const response = await instance({
+    const response = await axios({
+      baseURL: API_BASE_URL,
       url,
+      headers,
       ...options,
     });
-    return response;
-  } catch (error) {
-    throw error;
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 401) {
+      if (!window.location.pathname.includes('/login')) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
+    }
+    throw error.response?.data?.detail || error.message || '请求失败';
   }
-}; 
+} 

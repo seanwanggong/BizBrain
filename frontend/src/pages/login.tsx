@@ -1,89 +1,91 @@
-import { useState } from 'react';
-import { Form, Input, Button, message, Card } from 'antd';
+import React, { useState } from 'react';
+import { Form, Input, Button, Typography, message } from 'antd';
 import { useRouter } from 'next/router';
-import { useAuth } from '../hooks/useAuth';
-import styles from '../styles/Auth.module.css';
-import Layout from '../components/Layout';
+import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import styles from '@/styles/Auth.module.css';
+import { login } from '@/utils/api';
 
-interface LoginForm {
-  email: string;
-  password: string;
-}
+const { Title, Text } = Typography;
 
-export default function Login() {
+const LoginPage = () => {
   const router = useRouter();
-  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  const onFinish = async (values: LoginForm) => {
-    setLoading(true);
+  const handleLogin = async (values: { username: string; password: string }) => {
     try {
-      const result = await login(values.email, values.password);
-      if (result.success) {
+      setLoading(true);
+      const response = await login(values);
+      if (response.access_token) {
+        localStorage.setItem('token', response.access_token);
         message.success('登录成功');
-        router.push('/dashboard');
+        router.push('/');
       } else {
-        message.error(typeof result.error === 'string' ? result.error : '登录失败');
+        message.error('登录失败：' + (response.error || '未知错误'));
       }
     } catch (error) {
-      console.error('Login error:', error);
-      message.error(error instanceof Error ? error.message : '登录过程中发生错误');
+      console.error('Login failed:', error);
+      message.error('登录失败，请检查网络连接');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleRegister = () => {
+    router.push('/register', undefined, { shallow: true });
+  };
+
   return (
-    <Layout>
-      <div className={styles.container}>
-        <Card className={styles.card} title="登录">
+    <div className={styles.container}>
+      <div className={styles.leftPanel}>
+        <div className={styles.logo}>
+          <Title level={1}>BizBrain</Title>
+          <Text type="secondary">智能商业助手，助力企业成长</Text>
+        </div>
+      </div>
+      <div className={styles.rightPanel}>
+        <div className={styles.content}>
+          <Title level={2}>欢迎回来</Title>
+          <Text type="secondary">请登录您的账号</Text>
           <Form
             name="login"
-            onFinish={onFinish}
+            onFinish={handleLogin}
             layout="vertical"
             className={styles.form}
           >
             <Form.Item
-              label="邮箱"
-              name="email"
-              rules={[
-                { required: true, message: '请输入邮箱' },
-                { type: 'email', message: '请输入有效的邮箱地址' }
-              ]}
+              label="用户名"
+              name="username"
+              rules={[{ required: true, message: '请输入用户名' }]}
+              className={styles.formItem}
             >
-              <Input placeholder="请输入邮箱" />
+              <Input prefix={<UserOutlined />} placeholder="请输入用户名" />
             </Form.Item>
 
             <Form.Item
               label="密码"
               name="password"
-              rules={[
-                { required: true, message: '请输入密码' },
-                { min: 6, message: '密码长度至少为6位' }
-              ]}
+              rules={[{ required: true, message: '请输入密码' }]}
+              className={styles.formItem}
             >
-              <Input.Password placeholder="请输入密码" />
+              <Input.Password prefix={<LockOutlined />} placeholder="请输入密码" />
             </Form.Item>
 
             <Form.Item>
-              <Button
-                type="primary"
-                htmlType="submit"
-                className={styles.submitButton}
-                loading={loading}
-              >
+              <Button type="primary" htmlType="submit" block className={styles.submitButton} loading={loading}>
                 登录
               </Button>
             </Form.Item>
 
-            <div className={styles.links}>
-              <a onClick={() => router.push('/register')}>
+            <Form.Item>
+              <Button type="link" onClick={handleRegister} block className={styles.linkButton}>
                 还没有账号？立即注册
-              </a>
-            </div>
+              </Button>
+            </Form.Item>
           </Form>
-        </Card>
+        </div>
       </div>
-    </Layout>
+    </div>
   );
-} 
+};
+
+export default LoginPage; 

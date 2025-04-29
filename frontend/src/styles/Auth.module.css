@@ -1,129 +1,114 @@
 .container {
   display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.leftPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: calc(100vh - 188px); /* 考虑顶部导航和页脚的高度 */
-  background-color: #f0f2f5;
-  padding: 24px;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.9);
+  position: relative;
+  overflow: hidden;
 }
 
-.card {
+.leftPanel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('/images/auth-bg.svg') no-repeat center center;
+  background-size: cover;
+  opacity: 0.1;
+  z-index: 0;
+}
+
+.rightPanel {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+}
+
+.content {
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  background-color: #ffffff;
-  transition: box-shadow 0.3s ease;
+  padding: 40px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
 }
 
-.card:hover {
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12);
-}
-
-.card :global(.ant-card-head) {
-  border-bottom: none;
-  padding: 24px 24px 0;
-}
-
-.card :global(.ant-card-head-title) {
+.logo {
+  margin-bottom: 40px;
   text-align: center;
-  font-size: 28px;
-  font-weight: 600;
-  color: #262626;
-  padding: 0;
-  margin-bottom: 8px;
 }
 
-.card :global(.ant-card-body) {
-  padding: 24px;
+.logo h1 {
+  font-size: 32px;
+  color: #1890ff;
+  margin: 0;
 }
 
-.form :global(.ant-form-item) {
-  margin-bottom: 20px;
+.logo p {
+  color: rgba(0, 0, 0, 0.45);
+  margin: 8px 0 0;
 }
 
-.form :global(.ant-input),
-.form :global(.ant-input-password) {
+.form {
+  margin-top: 24px;
+}
+
+.formItem {
+  margin-bottom: 24px;
+}
+
+.formItem :global(.ant-form-item-label) {
+  padding-bottom: 8px;
+}
+
+.formItem :global(.ant-input),
+.formItem :global(.ant-input-password) {
   height: 40px;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 8px;
 }
 
 .submitButton {
-  height: 44px;
-  font-size: 16px;
+  height: 40px;
+  border-radius: 8px;
   font-weight: 500;
-  margin-top: 24px;
-  border-radius: 6px;
-  width: 100%;
-  transition: all 0.3s ease;
+  margin-top: 8px;
 }
 
-.submitButton:hover {
-  transform: translateY(-1px);
+.linkButton {
+  padding: 0;
+  height: auto;
 }
 
-.links {
-  text-align: center;
-  margin-top: 24px;
-  font-size: 14px;
-}
-
-.links a {
-  color: #1890ff;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.links a:hover {
-  color: #40a9ff;
-  text-decoration: none;
-}
-
-.links a::after {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 1px;
-  bottom: -2px;
-  left: 0;
-  background-color: #40a9ff;
-  transform: scaleX(0);
-  transition: transform 0.3s ease;
-}
-
-.links a:hover::after {
-  transform: scaleX(1);
-}
-
-.errorMessage {
-  color: #ff4d4f;
-  margin: -8px 0 16px;
-  text-align: center;
-  font-size: 14px;
-  background-color: #fff2f0;
-  border: 1px solid #ffccc7;
-  border-radius: 6px;
-  padding: 8px 12px;
-}
-
-@media (max-width: 576px) {
+@media (max-width: 768px) {
   .container {
-    padding: 16px;
-    background-color: #ffffff;
-  }
-  
-  .card {
-    box-shadow: none;
-    border-radius: 0;
+    flex-direction: column;
   }
 
-  .card:hover {
-    box-shadow: none;
+  .leftPanel {
+    padding: 24px;
+    min-height: 200px;
   }
-  
-  .submitButton {
-    margin-top: 16px;
+
+  .rightPanel {
+    padding: 24px;
+  }
+
+  .content {
+    padding: 24px;
   }
 } 

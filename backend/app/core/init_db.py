@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy import text
 from app.db.base import Base
 from app.core.database import engine
@@ -17,8 +17,8 @@ def init_db() -> None:
     Base.metadata.drop_all(bind=engine)  # 先删除所有表
     Base.metadata.create_all(bind=engine)
     
-    # 创建会话
-    SessionLocal = Session(bind=engine)
+    # 创建会话工厂
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = SessionLocal()
     
     try:
@@ -30,13 +30,13 @@ def init_db() -> None:
                 id=uuid.uuid4(),
                 email="admin@example.com",
                 username="admin",
-                hashed_password="$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",  # "secret"
-                is_active=True,
-                is_superuser=True
+                hashed_password=settings.FIRST_SUPERUSER_PASSWORD,
+                is_superuser=True,
+                is_active=True
             )
             db.add(admin)
             db.commit()
-            print("Created admin user")
+            db.refresh(admin)
             
         # 创建扩展
         db.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'))

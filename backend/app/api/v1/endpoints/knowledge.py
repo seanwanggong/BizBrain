@@ -1,9 +1,9 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from app.api import deps
-from app.crud import knowledge as knowledge_crud
+from app.core.deps import get_db, get_current_user
 from app.models.user import User
+from app.crud import knowledge as knowledge_crud
 from app.schemas.knowledge import (
     KnowledgeBase,
     KnowledgeBaseCreate,
@@ -18,8 +18,8 @@ router = APIRouter()
 
 @router.get("/knowledge-bases", response_model=List[KnowledgeBase])
 def get_knowledge_bases(
-    db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100)
 ):
@@ -35,8 +35,8 @@ def get_knowledge_bases(
 @router.post("/knowledge-bases", response_model=KnowledgeBase)
 def create_knowledge_base(
     knowledge_base: KnowledgeBaseCreate,
-    db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """创建知识库"""
     return knowledge_crud.create_knowledge_base(db, knowledge_base, current_user.id)
@@ -44,8 +44,8 @@ def create_knowledge_base(
 @router.get("/knowledge-bases/{knowledge_base_id}", response_model=KnowledgeBaseDetail)
 def get_knowledge_base(
     knowledge_base_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """获取知识库详情"""
     knowledge_base = knowledge_crud.get_knowledge_base(db, knowledge_base_id)
@@ -59,8 +59,8 @@ def get_knowledge_base(
 def update_knowledge_base(
     knowledge_base_id: int,
     knowledge_base: KnowledgeBaseUpdate,
-    db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """更新知识库"""
     db_knowledge_base = knowledge_crud.get_knowledge_base(db, knowledge_base_id)
@@ -73,8 +73,8 @@ def update_knowledge_base(
 @router.delete("/knowledge-bases/{knowledge_base_id}")
 def delete_knowledge_base(
     knowledge_base_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """删除知识库"""
     knowledge_base = knowledge_crud.get_knowledge_base(db, knowledge_base_id)
@@ -89,8 +89,8 @@ def delete_knowledge_base(
 @router.get("/knowledge-bases/{knowledge_base_id}/documents", response_model=List[Document])
 def get_documents(
     knowledge_base_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100)
 ):
@@ -106,8 +106,8 @@ def get_documents(
 def create_document(
     knowledge_base_id: int,
     document: DocumentCreate,
-    db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """创建文档"""
     knowledge_base = knowledge_crud.get_knowledge_base(db, knowledge_base_id)
@@ -122,8 +122,8 @@ def update_document(
     knowledge_base_id: int,
     document_id: int,
     document: DocumentUpdate,
-    db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """更新文档"""
     db_document = knowledge_crud.get_document(db, document_id)
@@ -139,8 +139,8 @@ def update_document(
 def delete_document(
     knowledge_base_id: int,
     document_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """删除文档"""
     document = knowledge_crud.get_document(db, document_id)
