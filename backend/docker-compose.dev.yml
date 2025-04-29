@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  app:
+    build: 
+      context: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - /app/__pycache__
+      - /app/.pytest_cache
+    environment:
+      - DEBUG=1
+      - POSTGRES_SERVER=host.docker.internal
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=morgan
+      - POSTGRES_PASSWORD=wsg254731051
+      - POSTGRES_DB=bizbrain
+    secrets:
+      - postgres_user
+      - postgres_password
+      - postgres_db
+      - secret_key
+      - openai_api_key
+    networks:
+      - bizbrain-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes  # 启用持久化
+
+networks:
+  bizbrain-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+
+secrets:
+  postgres_user:
+    file: ./secrets/postgres_user.txt
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  postgres_db:
+    file: ./secrets/postgres_db.txt
+  secret_key:
+    file: ./secrets/secret_key.txt
+  openai_api_key:
+    file: ./secrets/openai_api_key.txt 

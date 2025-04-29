@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from uuid import UUID
 
 
 class UserBase(BaseModel):
@@ -16,15 +17,21 @@ class UserUpdate(UserBase):
     password: Optional[str] = None
 
 
-class UserInDBBase(UserBase):
-    id: str
+class User(UserBase):
+    id: UUID
+    is_superuser: bool = False
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 
-class User(UserInDBBase):
-    pass
+class UserInDBBase(UserBase):
+    id: UUID
+
+    class Config:
+        from_attributes = True
 
 
 class UserInDB(UserInDBBase):

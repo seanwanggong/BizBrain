@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_SERVER=host.docker.internal
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=morgan
+      - POSTGRES_PASSWORD=wsg254731051
+      - POSTGRES_DB=bizbrain
+    secrets:
+      - postgres_user
+      - postgres_password
+      - postgres_db
+      - secret_key
+      - openai_api_key
+    networks:
+      - bizbrain-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+networks:
+  bizbrain-network:
+    driver: bridge
+
+secrets:
+  postgres_user:
+    file: ./secrets/postgres_user.txt
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  postgres_db:
+    file: ./secrets/postgres_db.txt
+  secret_key:
+    file: ./secrets/secret_key.txt
+  openai_api_key:
+    file: ./secrets/openai_api_key.txt 

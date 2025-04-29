@@ -5,11 +5,20 @@ from pydantic_core.core_schema import ValidationInfo
 import os
 
 
+def read_secret(secret_name: str, default: str = "") -> str:
+    """从 Docker secrets 或环境变量读取配置"""
+    try:
+        with open(f"/run/secrets/{secret_name}", "r") as f:
+            return f.read().strip()
+    except (IOError, FileNotFoundError):
+        return os.getenv(secret_name.upper(), default)
+
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "BizBrain"
     VERSION: str = "0.1.0"
     API_V1_STR: str = "/api/v1"
-    DEBUG: bool = True
+    DEBUG: bool = False  # 生产环境默认关闭调试模式
 
     # Server settings
     BACKEND_HOST: str = "0.0.0.0"
@@ -27,10 +36,10 @@ class Settings(BaseSettings):
         raise ValueError(v)
 
     # Database settings
-    POSTGRES_SERVER: str = "localhost"
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "postgres"
-    POSTGRES_DB: str = "bizbrain"
+    POSTGRES_SERVER: str = "db"  # Docker 服务名
+    POSTGRES_USER: str = read_secret("postgres_user", "postgres")
+    POSTGRES_PASSWORD: str = read_secret("postgres_password", "postgres")
+    POSTGRES_DB: str = read_secret("postgres_db", "bizbrain")
     POSTGRES_PORT: str = "5432"
 
     DATABASE_URL: Optional[PostgresDsn] = None
@@ -50,14 +59,14 @@ class Settings(BaseSettings):
         )
 
     # OpenAI settings
-    OPENAI_API_KEY: str = ""
+    OPENAI_API_KEY: str = read_secret("openai_api_key", "")
 
     # Token settings
-    SECRET_KEY: str = "your-secret-key-here"  # Change in production
+    SECRET_KEY: str = read_secret("secret_key", "your-secret-key-here")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     ALGORITHM: str = "HS256"  # JWT encoding algorithm
 
-    model_config = SettingsConfigDict(case_sensitive=True, env_file=".env")
+    model_config = SettingsConfigDict(case_sensitive=True)
 
 
 settings = Settings()

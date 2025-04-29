@@ -16,11 +16,15 @@ class UserService:
         return self.db.query(User).filter(User.username == username).first()
 
     def get_by_id(self, id: str) -> Optional[User]:
-        return self.db.query(User).filter(User.id == id).first()
+        try:
+            uuid_id = uuid.UUID(id) if isinstance(id, str) else id
+            return self.db.query(User).filter(User.id == uuid_id).first()
+        except ValueError:
+            return None
 
     def create(self, user_in: UserCreate) -> User:
         db_user = User(
-            id=str(uuid.uuid4()),  # 生成 UUID
+            id=uuid.uuid4(),  # 直接使用 UUID 对象
             email=user_in.email,
             username=user_in.username,
             hashed_password=get_password_hash(user_in.password),
