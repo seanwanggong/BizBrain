@@ -1,58 +1,34 @@
-from typing import Optional
+from typing import Optional, Type, TypeVar
 from sqlalchemy.orm import Session
-from ..models.user import User
-from ..schemas.user import UserCreate, UserUpdate
-from ..core.security import get_password_hash, verify_password
-import uuid
+from app.models.user import User
+from app.schemas.user import UserCreate, UserUpdate
+from app.core.security import get_password_hash, verify_password
+from app.services.base import BaseService
 
-class UserService:
+class UserService(BaseService[User, UserCreate, UserUpdate]):
     def __init__(self, db: Session):
-        self.db = db
+        super().__init__(User, db)
 
     def get_by_email(self, email: str) -> Optional[User]:
+        """Get a user by email."""
         return self.db.query(User).filter(User.email == email).first()
 
-    def get_by_username(self, username: str) -> Optional[User]:
-        return self.db.query(User).filter(User.username == username).first()
-
-    def get_by_id(self, id: str) -> Optional[User]:
-        try:
-            uuid_id = uuid.UUID(id) if isinstance(id, str) else id
-            return self.db.query(User).filter(User.id == uuid_id).first()
-        except ValueError:
-            return None
-
-    def create(self, user_in: UserCreate) -> User:
-        db_user = User(
-            id=uuid.uuid4(),  # 直接使用 UUID 对象
-            email=user_in.email,
-            username=user_in.username,
-            hashed_password=get_password_hash(user_in.password),
-            is_active=user_in.is_active,
-            is_superuser=False,  # 默认不是超级用户
+    def create(self, *, obj_in: UserCreate, **extra_fields) -> User:
+        """Create new user with hashed password."""
+        db_obj = User(
+            email=obj_in.email,
+            hashed_password=get_password_hash(obj_in.password),
+            full_name=obj_in.full_name,
+            **extra_fields
         )
-        self.db.add(db_user)
+        self.db.add(db_obj)
         self.db.commit()
-        self.db.refresh(db_user)
-        return db_user
+        self.db.refresh(db_obj)
+        return db_obj
 
-    def update(self, db_user: User, user_in: UserUpdate) -> User:
-        update_data = user_in.model_dump(exclude_unset=True)
-        if "password" in update_data:
-            hashed_password = get_password_hash(update_data["password"])
-            del update_data["password"]
-            update_data["hashed_password"] = hashed_password
-        
-        for field, value in update_data.items():
-            setattr(db_user, field, value)
-        
-        self.db.add(db_user)
-        self.db.commit()
-        self.db.refresh(db_user)
-        return db_user
-
-    def authenticate(self, email: str, password: str) -> Optional[User]:
-        user = self.get_by_email(email)
+    def authenticate(self, *, email: str, password: str) -> Optional[User]:
+        """Authenticate and return user."""
+        user = self.get_by_email(email=email)
         if not user:
             return None
         if not verify_password(password, user.hashed_password):
@@ -60,7 +36,9 @@ class UserService:
         return user
 
     def is_active(self, user: User) -> bool:
+        """Check if user is active."""
         return user.is_active
 
     def is_superuser(self, user: User) -> bool:
-        return user.is_superuser 
+        """Check if user is superuser."""
+        return user.is_superuser

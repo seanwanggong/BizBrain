@@ -4,30 +4,32 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from app.core.auth import create_access_token, get_password_hash, verify_password, get_current_user
+from app.core.auth import create_access_token, get_password_hash, verify_password
 from app.core.database import get_db
-from app.models.user import User
-from app.schemas.auth import Token, UserCreate, UserResponse
+from app.models.user import User as UserModel
+from app.schemas.user import User, UserCreate
+from app.schemas.auth import Token
 from app.core.config import settings
+from app.api.v1.deps import get_current_user
 import uuid
 
 router = APIRouter()
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
 def register(user: UserCreate, db: Session = Depends(get_db)) -> Any:
     """
     Register a new user.
     """
     try:
         # Check if email exists
-        if db.query(User).filter(User.email == user.email).first():
+        if db.query(UserModel).filter(UserModel.email == user.email).first():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already registered"
             )
         
         # Check if username exists
-        if db.query(User).filter(User.username == user.username).first():
+        if db.query(UserModel).filter(UserModel.username == user.username).first():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Username already registered"
@@ -35,7 +37,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)) -> Any:
         
         # Create new user
         hashed_password = get_password_hash(user.password)
-        db_user = User(
+        db_user = UserModel(
             id=str(uuid.uuid4()),
             email=user.email,
             username=user.username,
@@ -73,11 +75,17 @@ def login(
     """
     OAuth2 compatible token login, get an access token for future requests.
     """
-    user = db.query(User).filter(User.email == form_data.username).first()
+    # Try to find user by email first
+    user = db.query(UserModel).filter(UserModel.email == form_data.username).first()
+    
+    # If not found, try to find by username
+    if not user:
+        user = db.query(UserModel).filter(UserModel.username == form_data.username).first()
+    
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="Incorrect username/email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     if not user.is_active:
@@ -92,8 +100,8 @@ def login(
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.get("/me", response_model=UserResponse)
-async def read_users_me(current_user: User = Depends(get_current_user)) -> Any:
+@router.get("/me", response_model=User)
+async def read_users_me(current_user: UserModel = Depends(get_current_user)) -> Any:
     """
     Get current user information.
     """

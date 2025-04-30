@@ -3,6 +3,7 @@ from pydantic import AnyHttpUrl, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic_core.core_schema import ValidationInfo
 import os
+import secrets
 
 
 def read_secret(secret_name: str, default: str = "") -> str:
@@ -36,11 +37,11 @@ class Settings(BaseSettings):
         raise ValueError(v)
 
     # Database settings
-    POSTGRES_SERVER: str = "db"  # Docker 服务名
-    POSTGRES_USER: str = read_secret("postgres_user", "postgres")
-    POSTGRES_PASSWORD: str = read_secret("postgres_password", "postgres")
+    POSTGRES_SERVER: str = os.getenv("POSTGRES_SERVER", "localhost")  # 本地数据库
+    POSTGRES_PORT: str = os.getenv("POSTGRES_PORT", "5432")
+    POSTGRES_USER: str = read_secret("postgres_user", "morgan")
+    POSTGRES_PASSWORD: str = read_secret("postgres_password", "wsg254731051")
     POSTGRES_DB: str = read_secret("postgres_db", "bizbrain")
-    POSTGRES_PORT: str = "5432"
 
     DATABASE_URL: Optional[PostgresDsn] = None
 
@@ -51,18 +52,18 @@ class Settings(BaseSettings):
 
         return PostgresDsn.build(
             scheme="postgresql",
-            username=info.data.get("POSTGRES_USER", "postgres"),
-            password=info.data.get("POSTGRES_PASSWORD", "postgres"),
-            host=info.data.get("POSTGRES_SERVER", "db"),
+            username=info.data.get("POSTGRES_USER"),
+            password=info.data.get("POSTGRES_PASSWORD"),
+            host=info.data.get("POSTGRES_SERVER"),
             port=int(info.data.get("POSTGRES_PORT", "5432")),
-            path=f"/{info.data.get('POSTGRES_DB', 'bizbrain')}"
+            path=f"/{info.data.get('POSTGRES_DB')}"
         )
 
     # OpenAI settings
     OPENAI_API_KEY: str = read_secret("openai_api_key", "")
 
     # Token settings
-    SECRET_KEY: str = read_secret("secret_key", "your-secret-key-here")
+    SECRET_KEY: str = read_secret("secret_key", secrets.token_urlsafe(32))
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     ALGORITHM: str = "HS256"  # JWT encoding algorithm
 

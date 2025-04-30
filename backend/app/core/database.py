@@ -1,8 +1,9 @@
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
 from sqlalchemy.dialects import postgresql
 from ..core.config import settings
+from ..db.base_class import Base, init_models
 
 # Create PostgreSQL URL
 database_url = URL.create(
@@ -30,8 +31,8 @@ engine = create_engine(
 # 创建会话工厂
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# 创建基类
-Base = declarative_base()
+# 初始化所有模型
+init_models()
 
 # 获取数据库会话的依赖函数
 def get_db():

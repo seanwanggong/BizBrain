@@ -22,4 +22,13 @@ class Base:
     # Generate __tablename__ automatically
     @declared_attr
     def __tablename__(cls) -> str:
-        return cls.__name__.lower() 
+        return cls.__name__.lower()
+
+def init_models():
+    """确保所有模型都被正确加载"""
+    from app.models.workflow import Workflow
+    from app.models.workflow_task import WorkflowTask
+    from app.models.workflow_execution import WorkflowExecution
+    from app.models.task_log import TaskLog
+    from app.models.execution_log import ExecutionLog
+    from app.models.user import User 

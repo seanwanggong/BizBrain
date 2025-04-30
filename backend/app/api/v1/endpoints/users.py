@@ -1,15 +1,18 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
-from app.core.deps import get_db, get_current_active_user, get_current_active_superuser
+from app.core.deps import get_db, get_current_user, get_current_active_user, get_current_active_superuser
 from app.schemas.user import UserCreate, UserUpdate, User
+from app.schemas.auth import UserResponse
 from app.services.user_service import UserService
 from app.models.user import User as UserModel
+import logging
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.get("/", response_model=List[User])
-def read_users(
+async def read_users(
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
@@ -23,7 +26,7 @@ def read_users(
     return users
 
 @router.post("/", response_model=User)
-def create_user(
+async def create_user(
     *,
     db: Session = Depends(get_db),
     user_in: UserCreate,
@@ -43,32 +46,43 @@ def create_user(
     return user
 
 @router.put("/me", response_model=User)
-def update_user_me(
+async def update_user_me(
     *,
     db: Session = Depends(get_db),
     user_in: UserUpdate,
-    current_user: UserModel = Depends(get_current_active_user)
+    current_user: UserModel = Depends(get_current_user)
 ):
     """
     Update own user.
     """
     user_service = UserService(db)
     user = user_service.update(db_obj=current_user, obj_in=user_in)
-    return user
+    return {
+        **user.to_dict(),
+        "created_at": user.created_at_str,
+        "updated_at": user.updated_at_str
+    }
 
 @router.get("/me", response_model=User)
-def read_user_me(
-    current_user: UserModel = Depends(get_current_active_user)
+async def read_user_me(
+    request: Request,
+    current_user: UserModel = Depends(get_current_user)
 ):
     """
     Get current user.
     """
-    return current_user
+    logger.debug(f"Headers: {dict(request.headers)}")
+    logger.info(f"Accessing /me endpoint for user: {current_user.email if current_user else 'None'}")
+    return {
+        **current_user.to_dict(),
+        "created_at": current_user.created_at_str,
+        "updated_at": current_user.updated_at_str
+    }
 
 @router.get("/{user_id}", response_model=User)
-def read_user_by_id(
-    user_id: int,
-    current_user: UserModel = Depends(get_current_active_user),
+async def read_user_by_id(
+    user_id: str,
+    current_user: UserModel = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -77,10 +91,18 @@ def read_user_by_id(
     user_service = UserService(db)
     user = user_service.get_by_id(id=user_id)
     if user == current_user:
-        return user
+        return {
+            **user.to_dict(),
+            "created_at": user.created_at_str,
+            "updated_at": user.updated_at_str
+        }
     if not user_service.is_superuser(current_user):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="The user doesn't have enough privileges"
         )
-    return user 
+    return {
+        **user.to_dict(),
+        "created_at": user.created_at_str,
+        "updated_at": user.updated_at_str
+    } 

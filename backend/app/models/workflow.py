@@ -1,29 +1,24 @@
-from sqlalchemy import Column, String, Boolean, ForeignKey, JSON, DateTime, text, Integer, Enum
-from sqlalchemy.dialects.postgresql import UUID
+from datetime import datetime
+from sqlalchemy import Column, String, DateTime, ForeignKey, Text, Boolean
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
+from app.db.base_class import Base
 import uuid
-from ..core.database import Base
-from .workflow_execution import WorkflowExecution, ExecutionStatus
-from .workflow_task import WorkflowTask, TaskStatus
-
 
 class Workflow(Base):
     __tablename__ = "workflows"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text('gen_random_uuid()'))
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String(100), index=True)
-    description = Column(String(500), nullable=True)
-    config = Column(JSON, nullable=True)  # 工作流配置
+    description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'))
-    updated_at = Column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'), onupdate=text('CURRENT_TIMESTAMP'))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 外键关联
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    
+    # 关联 - 使用字符串引用避免循环导入
     user = relationship("User", back_populates="workflows")
-    
-    # 工作流执行历史
-    executions = relationship("WorkflowExecution", back_populates="workflow")
-    
-    # 工作流任务
-    tasks = relationship("WorkflowTask", back_populates="workflow") 
+    tasks = relationship("WorkflowTask", back_populates="workflow", cascade="all, delete-orphan")
+    executions = relationship("WorkflowExecution", back_populates="workflow", cascade="all, delete-orphan") 

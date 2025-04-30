@@ -1,14 +1,15 @@
-from typing import Generator, Optional
-from fastapi import Depends, HTTPException, status
+from typing import Generator
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
-from pydantic import ValidationError
+from jose import jwt
 from sqlalchemy.orm import Session
 from app.core.config import settings
-from app.services.user_service import UserService
-from app.schemas.user import TokenPayload
 from app.core.database import SessionLocal
 from app.models.user import User
+import logging
+
+# 设置日志
+logger = logging.getLogger(__name__)
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/auth/login"
@@ -21,42 +22,85 @@ def get_db() -> Generator:
     finally:
         db.close()
 
-def get_current_user(
-    db: Session = Depends(get_db),
-    token: str = Depends(oauth2_scheme)
-) -> Optional[User]:
-    try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        token_data = TokenPayload(**payload)
-        if token_data.sub is None:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Could not validate credentials",
-            )
-    except (JWTError, ValidationError):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
-        )
-    
-    user_service = UserService(db)
-    user = user_service.get_by_email(email=token_data.sub)
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    return user
-
-def get_current_active_user(
-    current_user: User = Depends(get_current_user),
+async def get_current_user(
+    request: Request,
+    token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ) -> User:
-    user_service = UserService(db)
-    if not user_service.is_active(current_user):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    try:
+        logger.info(f"Validating token for request: {request.url}")
+        logger.debug(f"Token: {token[:10]}...")
+        
+        # 解码 token
+        try:
+            payload = jwt.decode(
+                token, 
+                settings.SECRET_KEY, 
+                algorithms=[settings.ALGORITHM]
+            )
+            logger.debug(f"Token payload: {payload}")
+        except jwt.ExpiredSignatureError:
+            logger.error("Token has expired")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has expired",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        except jwt.JWTError as e:
+            logger.error(f"JWT validation error: {str(e)}")
+            raise credentials_exception
+            
+        email: str = payload.get("sub")
+        if email is None:
+            logger.error("No email found in token payload")
+            raise credentials_exception
+            
+        # 查询用户
+        try:
+            user = db.query(User).filter(User.email == email).first()
+            if user is None:
+                logger.error(f"No user found with email: {email}")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="User not found"
+                )
+                
+            if not user.is_active:
+                logger.error(f"User {email} is not active")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Inactive user"
+                )
+                
+            logger.info(f"Successfully authenticated user: {email}")
+            return user
+            
+        except Exception as e:
+            logger.error(f"Database error: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database error"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in get_current_user: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
+
+def get_current_active_user(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    if not current_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user"
@@ -64,11 +108,9 @@ def get_current_active_user(
     return current_user
 
 def get_current_active_superuser(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user)
 ) -> User:
-    user_service = UserService(db)
-    if not user_service.is_superuser(current_user):
+    if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="The user doesn't have enough privileges"

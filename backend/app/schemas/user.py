@@ -1,47 +1,34 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, computed_field
 from typing import Optional
 from uuid import UUID
-
+from datetime import datetime
 
 class UserBase(BaseModel):
     email: EmailStr
     username: str
     is_active: bool = True
 
-
 class UserCreate(UserBase):
     password: str
-
 
 class UserUpdate(UserBase):
     password: Optional[str] = None
 
-
 class User(UserBase):
     id: UUID
     is_superuser: bool = False
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    @computed_field
+    @property
+    def created_at_str(self) -> Optional[str]:
+        return self.created_at.isoformat() if self.created_at else None
+
+    @computed_field
+    @property
+    def updated_at_str(self) -> Optional[str]:
+        return self.updated_at.isoformat() if self.updated_at else None
 
     class Config:
-        from_attributes = True
-
-
-class UserInDBBase(UserBase):
-    id: UUID
-
-    class Config:
-        from_attributes = True
-
-
-class UserInDB(UserInDBBase):
-    hashed_password: str
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenPayload(BaseModel):
-    sub: Optional[str] = None 
+        from_attributes = True 

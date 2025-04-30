@@ -1,18 +1,22 @@
 from pydantic import BaseModel, EmailStr, Field
 from uuid import UUID
-from datetime import datetime
 from typing import Optional
+from datetime import datetime
 
 class UserBase(BaseModel):
     email: EmailStr
     username: str = Field(..., min_length=1, max_length=50)
 
-class UserCreate(UserBase):
-    password: str = Field(..., min_length=6, max_length=100)
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str = Field(..., min_length=6, max_length=100)
+class TokenPayload(BaseModel):
+    sub: Optional[UUID] = None
+    exp: Optional[int] = None
+
+class TokenData(BaseModel):
+    email: str | None = None
 
 class UserResponse(UserBase):
     id: UUID
@@ -22,11 +26,4 @@ class UserResponse(UserBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        from_attributes = True
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    email: str | None = None 
+        from_attributes = True 
