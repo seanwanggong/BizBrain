@@ -1,0 +1,18 @@
+.form {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.form :global(.ant-form-item) {
+  margin-bottom: 24px;
+}
+
+.submitButton {
+  margin-top: 32px;
+  text-align: right;
+}
+
+.submitButton button {
+  min-width: 120px;
+} 

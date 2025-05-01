@@ -1,27 +1,37 @@
-from sqlalchemy import Column, String, JSON, DateTime, ForeignKey, Enum, text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, Integer, String, Float, JSON, ForeignKey, DateTime
+from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from ..db.base_class import Base
-import uuid
-from enum import Enum as PyEnum
-
-class ExecutionLogStatus(PyEnum):
-    """执行日志状态"""
-    INFO = "info"
-    WARNING = "warning"
-    ERROR = "error"
-    DEBUG = "debug"
 
 class ExecutionLog(Base):
-    """执行日志模型"""
     __tablename__ = "execution_logs"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text('gen_random_uuid()'))
-    execution_id = Column(UUID(as_uuid=True), ForeignKey("workflow_executions.id"), nullable=False)
-    level = Column(Enum(ExecutionLogStatus), default=ExecutionLogStatus.INFO, nullable=False)
-    message = Column(String(500), nullable=False)
-    data = Column(JSON, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'), nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    agent_id = Column(Integer, ForeignKey("agents.id"), nullable=False)
+    input = Column(String, nullable=False)
+    output = Column(String, nullable=False)
+    steps = Column(JSON)
+    execution_time = Column(Float)
+    context = Column(JSON)
+    status = Column(String, default="completed")  # completed, failed, timeout
+    error = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # 关系
-    execution = relationship("WorkflowExecution", back_populates="execution_logs") 
+    agent = relationship("Agent", back_populates="execution_logs")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "agent_id": self.agent_id,
+            "input": self.input,
+            "output": self.output,
+            "steps": self.steps,
+            "execution_time": self.execution_time,
+            "context": self.context,
+            "status": self.status,
+            "error": self.error,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+        } 

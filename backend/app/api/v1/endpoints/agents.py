@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.deps import get_current_user
 from app.services.agent_service import AgentService
 from app.schemas.agent import (
     AgentCreate,
@@ -11,26 +12,42 @@ from app.schemas.agent import (
     AgentExecutionRequest,
     AgentExecutionResponse
 )
+from app.models.user import User as UserModel
 
 router = APIRouter()
 
-@router.post("/", response_model=AgentResponse, status_code=status.HTTP_201_CREATED)
-def create_agent(agent: AgentCreate, db: Session = Depends(get_db)):
+@router.post("/", response_model=AgentResponse)
+def create_agent(
+    agent: AgentCreate,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
     """Create a new agent."""
-    service = AgentService(db)
     try:
-        return service.create_agent(agent)
+        print(f"Received request data: {agent.model_dump()}")
+        print(f"Current user: {current_user.id}")
+        agent_service = AgentService(db)
+        created_agent = agent_service.create_agent(agent, creator_id=current_user.id)
+        return created_agent
+    except HTTPException as e:
+        raise e
     except Exception as e:
+        print(f"Error creating agent: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
 
 @router.get("/", response_model=List[AgentResponse])
-def list_agents(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """List all agents."""
+def list_agents(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """List all agents for the current user."""
     service = AgentService(db)
-    return service.get_agents(skip=skip, limit=limit)
+    return service.get_agents(skip=skip, limit=limit, creator_id=current_user.id)
 
 @router.get("/{agent_id}", response_model=AgentResponse)
 def get_agent(agent_id: int, db: Session = Depends(get_db)):

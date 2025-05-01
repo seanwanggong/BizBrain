@@ -10,21 +10,22 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from app.models.user import User
+from app.models.knowledge import KnowledgeBase, Document
 from app.models.workflow import Workflow
 from app.models.workflow_execution import WorkflowExecution
 from app.models.workflow_task import WorkflowTask
-from app.models.task_log import TaskLog
-from app.models.execution_log import ExecutionLog
+from app.models.task_log import TaskLog, TaskLogStatus
+from app.models.execution_log import ExecutionLog, ExecutionLogStatus
 from app.models.agent import Agent
-from app.core.database import Base
+from app.db.base import Base
 from app.core.config import settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-# Override sqlalchemy.url with environment variable if set
-config.set_main_option('sqlalchemy.url', str(settings.DATABASE_URL))
+# 设置数据库 URL
+config.set_main_option('sqlalchemy.url', settings.SQLALCHEMY_DATABASE_URI.replace('+asyncpg', ''))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

@@ -23,6 +23,7 @@ class User(Base):
     # 关联 - 使用字符串引用避免循环导入
     workflows = relationship("Workflow", back_populates="user")
     workflow_executions = relationship("WorkflowExecution", back_populates="user")
+    agents = relationship("Agent", back_populates="creator")
 
     @property
     def created_at_str(self) -> str:

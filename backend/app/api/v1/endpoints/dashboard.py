@@ -4,9 +4,8 @@ from sqlalchemy import select, func
 from typing import Dict
 
 from app.api import deps
-from app.models.task import Task
+from app.models.workflow_task import WorkflowTask, TaskStatus, TaskType
 from app.models.agent import Agent
-from app.schemas.task import TaskStatus, TaskType
 
 router = APIRouter()
 
@@ -19,31 +18,31 @@ async def get_dashboard_stats(
     """
     try:
         # 获取任务统计
-        total_tasks = await db.scalar(select(func.count()).select_from(Task))
+        total_tasks = await db.scalar(select(func.count()).select_from(WorkflowTask))
         running_tasks = await db.scalar(
             select(func.count())
-            .select_from(Task)
-            .where(Task.status == TaskStatus.RUNNING)
+            .select_from(WorkflowTask)
+            .where(WorkflowTask.status == TaskStatus.RUNNING)
         )
         completed_tasks = await db.scalar(
             select(func.count())
-            .select_from(Task)
-            .where(Task.status == TaskStatus.COMPLETED)
+            .select_from(WorkflowTask)
+            .where(WorkflowTask.status == TaskStatus.COMPLETED)
         )
         failed_tasks = await db.scalar(
             select(func.count())
-            .select_from(Task)
-            .where(Task.status == TaskStatus.FAILED)
+            .select_from(WorkflowTask)
+            .where(WorkflowTask.status == TaskStatus.FAILED)
         )
         scheduled_tasks = await db.scalar(
             select(func.count())
-            .select_from(Task)
-            .where(Task.type == TaskType.LOOP)
+            .select_from(WorkflowTask)
+            .where(WorkflowTask.type == TaskType.LOOP)
         )
         llm_tasks = await db.scalar(
             select(func.count())
-            .select_from(Task)
-            .where(Task.type == TaskType.LLM)
+            .select_from(WorkflowTask)
+            .where(WorkflowTask.type == TaskType.LLM)
         )
 
         return {

@@ -1,0 +1,33 @@
+.executionsTable {
+  padding: 24px;
+}
+
+.executionsTable :global(.ant-table-wrapper) {
+  background: #fff;
+  border-radius: 8px;
+}
+
+.executionsTable :global(.ant-table-thead > tr > th) {
+  background: #fafafa;
+  font-weight: 500;
+}
+
+.executionsTable :global(.ant-table-row:hover) {
+  cursor: pointer;
+}
+
+.executionsTable :global(.ant-table-cell a) {
+  color: #1890ff;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.executionsTable :global(.ant-table-cell a:hover) {
+  color: #40a9ff;
+}
+
+.executionsTable :global(.ant-tag) {
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+} 

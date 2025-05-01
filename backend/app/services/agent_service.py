@@ -29,28 +29,85 @@ from langchain.memory import ConversationBufferMemory
 from langchain.prompts import StringPromptTemplate
 from langchain.chains import LLMChain
 from langchain_community.chat_models import ChatOpenAI
+from fastapi import HTTPException, status
+import concurrent.futures
+import uuid
+from ..models.execution_log import ExecutionLog
 
 class AgentService:
     def __init__(self, db: Session):
         self.db = db
+        self.openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    def create_agent(self, agent: AgentCreate) -> Agent:
-        db_agent = Agent(
-            name=agent.name,
-            description=agent.description,
-            type=agent.type,
-            config=agent.config
-        )
-        self.db.add(db_agent)
-        self.db.commit()
-        self.db.refresh(db_agent)
-        return db_agent
+    def create_agent(self, agent: AgentCreate, creator_id: str) -> Agent:
+        try:
+            # 检查是否已存在同名agent
+            existing_agent = self.db.query(Agent).filter(Agent.name == agent.name).first()
+            if existing_agent:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"An agent with name '{agent.name}' already exists"
+                )
+
+            # 打印接收到的数据，用于调试
+            print("=== Starting agent creation ===")
+            print(f"Received agent data: {agent.model_dump()}")
+            print(f"Agent type: {type(agent)}")
+            
+            # 准备数据
+            agent_data = {
+                'name': agent.name,
+                'description': agent.description,
+                'agent_type': agent.type,  # 使用 agent_type 而不是 type
+                'config': agent.config,
+                'is_active': agent.is_active,
+                'creator_id': creator_id  # 添加 creator_id
+            }
+            print(f"Prepared agent data: {agent_data}")
+            
+            # 创建新的 agent 实例
+            print("Creating Agent instance...")
+            db_agent = Agent(**agent_data)
+            print(f"Created Agent instance: {db_agent}")
+            print(f"Agent instance type: {type(db_agent)}")
+            print(f"Agent instance attributes: {db_agent.__dict__}")
+            
+            # 添加到数据库
+            print("Adding agent to database...")
+            self.db.add(db_agent)
+            print("Committing changes...")
+            self.db.commit()
+            print("Refreshing agent...")
+            self.db.refresh(db_agent)
+            print(f"Final agent state: {db_agent.__dict__}")
+            
+            # 返回创建好的 agent
+            print("=== Agent creation completed successfully ===")
+            return db_agent
+        except Exception as e:
+            print("=== Error in agent creation ===")
+            print(f"Error type: {type(e)}")
+            print(f"Error message: {str(e)}")
+            print(f"Error args: {e.args}")
+            print(f"Agent data: {agent.model_dump()}")
+            print(f"Agent type: {type(agent)}")
+            self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to create agent: {str(e)}"
+            )
 
     def get_agent(self, agent_id: int) -> Optional[Agent]:
-        return self.db.query(Agent).filter(Agent.id == agent_id).first()
+        agent = self.db.query(Agent).filter(Agent.id == agent_id).first()
+        if agent:
+            return agent
+        return None
 
-    def get_agents(self, skip: int = 0, limit: int = 100) -> List[Agent]:
-        return self.db.query(Agent).offset(skip).limit(limit).all()
+    def get_agents(self, skip: int = 0, limit: int = 100, creator_id: str = None) -> List[Agent]:
+        query = self.db.query(Agent)
+        if creator_id:
+            query = query.filter(Agent.creator_id == creator_id)
+        return query.offset(skip).limit(limit).all()
 
     def update_agent(self, agent_id: int, agent: AgentUpdate) -> Optional[Agent]:
         db_agent = self.get_agent(agent_id)
@@ -76,33 +133,30 @@ class AgentService:
 
     def create_agent_executor(self, agent: Agent) -> AgentExecutor:
         """创建LangChain Agent执行器"""
+        # 获取Agent配置
+        config = agent.config
+        
+        # 创建LLM实例
         llm = ChatOpenAI(
-            temperature=0,
-            model_name=agent.config.get("model_name", "gpt-3.5-turbo"),
+            temperature=config.get("temperature", 0),
+            model_name=config.get("model", "gpt-3.5-turbo"),
             openai_api_key=os.getenv("OPENAI_API_KEY")
         )
         
-        # 根据agent类型创建不同的工具集
+        # 创建记忆组件
+        memory = self._create_memory(config.get("memory", "none"))
+        
+        # 创建工具集
         tools = self._create_tools(agent)
         
         # 创建系统提示
-        system_message = """You are a helpful AI assistant that can use various tools to help users accomplish tasks. 
-        You have access to the following tools:
-        - Calculator: For mathematical calculations
-        - ReadFile: For reading file contents
-        - WriteFile: For writing to files
-        - HTTPRequest: For making HTTP requests
-        - SQLQuery: For executing SQL queries
-        - GetCurrentTime: For getting the current time
-        - FormatTime: For formatting timestamps
-        
-        Use these tools appropriately to help users with their requests.
-        Always respond with a complete sentence, even when using tools."""
+        system_prompt = config.get("systemPrompt", "")
         
         prompt = ChatPromptTemplate.from_messages([
-            ("system", system_message),
+            ("system", system_prompt),
             ("human", "{input}"),
-            MessagesPlaceholder(variable_name="agent_scratchpad")
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+            MessagesPlaceholder(variable_name="chat_history")
         ])
         
         # 创建Agent
@@ -112,12 +166,27 @@ class AgentService:
         agent_executor = AgentExecutor(
             agent=agent,
             tools=tools,
+            memory=memory,
             verbose=True,
-            return_intermediate_steps=True,
-            handle_parsing_errors=True
+            max_iterations=config.get("maxIterations", 3),
+            early_stopping_method="force",
+            handle_parsing_errors=True,
+            return_intermediate_steps=True
         )
         
         return agent_executor
+
+    def _create_memory(self, memory_type: str):
+        """创建记忆组件"""
+        if memory_type == "conversation":
+            return ConversationBufferMemory(
+                memory_key="chat_history",
+                return_messages=True
+            )
+        elif memory_type == "vectorstore":
+            # 实现向量存储记忆
+            pass
+        return None
 
     def execute_agent(self, agent_id: int, input_text: str) -> Dict[str, Any]:
         """执行Agent"""
@@ -130,8 +199,23 @@ class AgentService:
         
         start_time = time.time()
         try:
+            # 创建执行上下文
+            context = self._create_execution_context(agent)
+            
+            # 创建Agent执行器
             agent_executor = self.create_agent_executor(agent)
-            result = agent_executor.invoke({"input": input_text})
+            
+            # 设置超时
+            timeout = agent.config.get("timeout", 60)
+            
+            # 执行Agent
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(agent_executor.invoke, {"input": input_text})
+                try:
+                    result = future.result(timeout=timeout)
+                except concurrent.futures.TimeoutError:
+                    raise ValueError(f"Agent execution timed out after {timeout} seconds")
+            
             execution_time = time.time() - start_time
             
             # 记录执行历史
@@ -140,16 +224,83 @@ class AgentService:
                 input_text=input_text,
                 output=result["output"],
                 steps=result["intermediate_steps"],
-                execution_time=execution_time
+                execution_time=execution_time,
+                context=context
             )
             
             return {
                 "output": result["output"],
                 "steps": result["intermediate_steps"],
-                "execution_time": execution_time
+                "execution_time": execution_time,
+                "context": context
             }
+            
         except Exception as e:
-            raise ValueError(f"Error executing agent: {str(e)}")
+            error_strategy = agent.config.get("errorStrategy", "fail")
+            if error_strategy == "retry":
+                # 实现重试逻辑
+                return self._retry_execution(agent, input_text)
+            elif error_strategy == "ignore":
+                # 返回部分结果
+                return self._handle_partial_result(e)
+            else:
+                raise ValueError(f"Error executing agent: {str(e)}")
+
+    def _create_execution_context(self, agent: Agent) -> Dict[str, Any]:
+        """创建执行上下文"""
+        return {
+            "agent_id": agent.id,
+            "agent_type": agent.type,
+            "timestamp": datetime.utcnow().isoformat(),
+            "execution_id": str(uuid.uuid4())
+        }
+
+    def _retry_execution(self, agent: Agent, input_text: str, max_retries: int = 3) -> Dict[str, Any]:
+        """重试执行"""
+        last_error = None
+        for attempt in range(max_retries):
+            try:
+                return self.execute_agent(agent.id, input_text)
+            except Exception as e:
+                last_error = e
+                time.sleep(2 ** attempt)  # 指数退避
+        raise ValueError(f"Failed after {max_retries} retries: {str(last_error)}")
+
+    def _handle_partial_result(self, error: Exception) -> Dict[str, Any]:
+        """处理部分结果"""
+        return {
+            "output": "Execution partially completed with errors",
+            "steps": [],
+            "execution_time": 0,
+            "error": str(error)
+        }
+
+    def log_execution(self, agent_id: int, input_text: str, output: str, steps: List[dict], 
+                     execution_time: float, context: Dict[str, Any]):
+        """记录执行历史"""
+        execution_log = {
+            "agent_id": agent_id,
+            "input": input_text,
+            "output": output,
+            "steps": steps,
+            "execution_time": execution_time,
+            "context": context,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        # 保存到数据库
+        log = ExecutionLog(
+            agent_id=agent_id,
+            input=input_text,
+            output=output,
+            steps=steps,
+            execution_time=execution_time,
+            context=context
+        )
+        self.db.add(log)
+        self.db.commit()
+        
+        return log
 
     def _create_tools(self, agent: Agent) -> List[Tool]:
         """根据agent配置创建工具集"""
@@ -376,19 +527,4 @@ class AgentService:
             )
         ])
         
-        return tools
-
-    def log_execution(self, agent_id: int, input_text: str, output: str, steps: List[dict], execution_time: float):
-        """记录agent执行历史"""
-        execution_log = {
-            "agent_id": agent_id,
-            "input": input_text,
-            "output": output,
-            "steps": steps,
-            "execution_time": execution_time,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-        # 这里可以将日志保存到数据库或文件系统中
-        # 目前先打印到控制台
-        print(f"Execution Log: {json.dumps(execution_log, indent=2)}") 
+        return tools 

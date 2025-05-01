@@ -52,6 +52,11 @@ class Settings(BaseSettings):
         """构建数据库 URI"""
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
+    @property
+    def SYNC_SQLALCHEMY_DATABASE_URI(self) -> str:
+        """构建同步数据库 URI"""
+        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+
     # OpenAI settings
     OPENAI_API_KEY: str = read_secret("openai_api_key", "")
 

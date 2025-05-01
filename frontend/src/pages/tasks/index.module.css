@@ -1,0 +1,33 @@
+.tasksTable {
+  padding: 24px;
+}
+
+.tasksTable :global(.ant-table-wrapper) {
+  background: #fff;
+  border-radius: 8px;
+}
+
+.tasksTable :global(.ant-table-thead > tr > th) {
+  background: #fafafa;
+  font-weight: 500;
+}
+
+.tasksTable :global(.ant-table-row:hover) {
+  cursor: pointer;
+}
+
+.tasksTable :global(.ant-table-cell a) {
+  color: #1890ff;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.tasksTable :global(.ant-table-cell a:hover) {
+  color: #40a9ff;
+}
+
+.tasksTable :global(.ant-tag) {
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+} 
