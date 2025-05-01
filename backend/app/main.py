@@ -6,14 +6,6 @@ from app.core.config import settings
 from app.core.init_db import init_db
 from app.api.v1.endpoints import docs
 
-# 导入所有模型以确保它们被正确注册
-from app.models.workflow import Workflow
-from app.models.workflow_task import WorkflowTask
-from app.models.workflow_execution import WorkflowExecution
-from app.models.task_log import TaskLog
-from app.models.execution_log import ExecutionLog
-from app.models.user import User
-
 # 配置日志
 logging.basicConfig(
     level=logging.DEBUG,
@@ -23,7 +15,9 @@ logging.basicConfig(
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    docs_url=f"{settings.API_V1_STR}/docs",
+    redoc_url=f"{settings.API_V1_STR}/redoc"
 )
 
 # 设置 CORS

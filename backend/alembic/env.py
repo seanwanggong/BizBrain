@@ -10,12 +10,12 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from app.models.user import User
-from app.models.knowledge import KnowledgeBase, Document
 from app.models.workflow import Workflow
 from app.models.workflow_execution import WorkflowExecution
 from app.models.workflow_task import WorkflowTask
 from app.models.task_log import TaskLog
 from app.models.execution_log import ExecutionLog
+from app.models.agent import Agent
 from app.core.database import Base
 from app.core.config import settings
 

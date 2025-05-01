@@ -4,12 +4,14 @@ from .workflow_execution import WorkflowExecution
 from .workflow_task import WorkflowTask
 from .task_log import TaskLog
 from .execution_log import ExecutionLog
+from .agent import Agent
 
 __all__ = [
-    "User",
-    "Workflow",
-    "WorkflowExecution",
-    "WorkflowTask",
-    "TaskLog",
-    "ExecutionLog",
+    'User',
+    'Workflow',
+    'WorkflowExecution',
+    'WorkflowTask',
+    'TaskLog',
+    'ExecutionLog',
+    'Agent'
 ] 

@@ -4,13 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from app.core.auth import create_access_token, get_password_hash, verify_password
+from app.core.auth import create_access_token, get_password_hash, verify_password, get_current_user
 from app.core.database import get_db
 from app.models.user import User as UserModel
 from app.schemas.user import User, UserCreate
 from app.schemas.auth import Token
 from app.core.config import settings
-from app.api.v1.deps import get_current_user
 import uuid
 
 router = APIRouter()
@@ -75,17 +74,11 @@ def login(
     """
     OAuth2 compatible token login, get an access token for future requests.
     """
-    # Try to find user by email first
     user = db.query(UserModel).filter(UserModel.email == form_data.username).first()
-    
-    # If not found, try to find by username
-    if not user:
-        user = db.query(UserModel).filter(UserModel.username == form_data.username).first()
-    
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username/email or password",
+            detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     if not user.is_active:

@@ -1,10 +1,13 @@
 from typing import Any, Dict, List, Optional, Union
-from pydantic import AnyHttpUrl, PostgresDsn, field_validator
+from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic_core.core_schema import ValidationInfo
 import os
 import secrets
+import logging
 
+# 配置 SQLAlchemy 日志
+logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
 
 def read_secret(secret_name: str, default: str = "") -> str:
     """从 Docker secrets 或环境变量读取配置"""
@@ -19,7 +22,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "BizBrain"
     VERSION: str = "0.1.0"
     API_V1_STR: str = "/api/v1"
-    DEBUG: bool = False  # 生产环境默认关闭调试模式
+    DEBUG: bool = True  # 开发环境默认开启调试模式
 
     # Server settings
     BACKEND_HOST: str = "0.0.0.0"
@@ -37,27 +40,17 @@ class Settings(BaseSettings):
         raise ValueError(v)
 
     # Database settings
-    POSTGRES_SERVER: str = os.getenv("POSTGRES_SERVER", "localhost")  # 本地数据库
+    POSTGRES_SERVER: str = os.getenv("POSTGRES_SERVER", "localhost")
     POSTGRES_PORT: str = os.getenv("POSTGRES_PORT", "5432")
     POSTGRES_USER: str = read_secret("postgres_user", "morgan")
     POSTGRES_PASSWORD: str = read_secret("postgres_password", "wsg254731051")
     POSTGRES_DB: str = read_secret("postgres_db", "bizbrain")
+    DB_ECHO: bool = True  # 启用 SQL 查询日志
 
-    DATABASE_URL: Optional[PostgresDsn] = None
-
-    @field_validator("DATABASE_URL", mode='before')
-    def assemble_db_connection(cls, v: Optional[str], info: ValidationInfo) -> Any:
-        if isinstance(v, str):
-            return v
-
-        return PostgresDsn.build(
-            scheme="postgresql",
-            username=info.data.get("POSTGRES_USER"),
-            password=info.data.get("POSTGRES_PASSWORD"),
-            host=info.data.get("POSTGRES_SERVER"),
-            port=int(info.data.get("POSTGRES_PORT", "5432")),
-            path=f"/{info.data.get('POSTGRES_DB')}"
-        )
+    @property
+    def SQLALCHEMY_DATABASE_URI(self) -> str:
+        """构建数据库 URI"""
+        return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
     # OpenAI settings
     OPENAI_API_KEY: str = read_secret("openai_api_key", "")
