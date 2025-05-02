@@ -86,7 +86,7 @@ const AgentDetailPage: React.FC = () => {
               {agent.description}
             </Descriptions.Item>
             <Descriptions.Item label="类型">
-              {agent.type}
+              {agent.agent_type}
             </Descriptions.Item>
             <Descriptions.Item label="状态">
               <Tag color={agent.is_active ? 'success' : 'default'}>

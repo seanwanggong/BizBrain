@@ -23,7 +23,7 @@ const WorkflowForm: React.FC<WorkflowFormProps> = ({
   const [form] = Form.useForm<WorkflowFormData>();
   const [formDesignerVisible, setFormDesignerVisible] = useState(false);
   const [currentNodeIndex, setCurrentNodeIndex] = useState<number | null>(null);
-  const [currentFormSchema, setCurrentFormSchema] = useState<FormSchema | null>(null);
+  const [currentFormSchema, setCurrentFormSchema] = useState<FormSchema | undefined>(undefined);
 
   // 监听节点类型变化
   const handleNodeTypeChange = (index: number, value: NodeType) => {

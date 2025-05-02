@@ -12,6 +12,7 @@ import asyncio
 import json
 from datetime import datetime
 import logging
+from uuid import UUID
 
 
 class WorkflowEngine:
@@ -19,13 +20,13 @@ class WorkflowEngine:
         self.db = db
         self.llm_service = LLMService()
     
-    async def execute_workflow(self, workflow_id: int, user_id: int, input_data: Dict[str, Any] = None) -> WorkflowExecution:
+    async def execute_workflow(self, workflow_id: UUID, user_id: UUID, input_data: Dict[str, Any] = None) -> WorkflowExecution:
         """执行工作流"""
         # 创建工作流执行记录
         execution = WorkflowExecution(
             workflow_id=workflow_id,
             user_id=user_id,
-            status="running",
+            status=ExecutionStatus.RUNNING,
             started_at=datetime.utcnow()
         )
         self.db.add(execution)
@@ -48,12 +49,12 @@ class WorkflowEngine:
             results = await self._execute_tasks(task_graph, input_data, execution.id)
             
             # 更新执行状态
-            execution.status = "completed"
+            execution.status = ExecutionStatus.COMPLETED
             execution.result = results
             execution.completed_at = datetime.utcnow()
             
         except Exception as e:
-            execution.status = "failed"
+            execution.status = ExecutionStatus.FAILED
             execution.error_message = str(e)
             execution.completed_at = datetime.utcnow()
         

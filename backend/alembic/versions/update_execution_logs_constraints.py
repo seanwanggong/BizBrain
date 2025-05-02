@@ -1,6 +1,6 @@
 """update execution logs constraints
 
-Revision ID: update_execution_logs_constraints
+Revision ID: 7a9b2c3d4e5f
 Revises: add_workflow_execution_id
 Create Date: 2024-03-19 11:00:00.000000
 
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'update_execution_logs_constraints'
+revision = '7a9b2c3d4e5f'
 down_revision = 'add_workflow_execution_id'
 branch_labels = None
 depends_on = None

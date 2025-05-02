@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { Agent, AgentCreate, AgentUpdate, AgentExecution } from '@/types/agent';
-import { Workflow, WorkflowFormData } from '@/types/workflow';
+import { Agent, AgentCreate, AgentUpdate, AgentExecution, AgentFormData } from '@/types/agent';
+import { Workflow, WorkflowFormData, Task, TaskType, TaskStatus } from '@/types/workflow';
 import { User } from '@/types/user';
 import {
   LoginResponse,
@@ -13,10 +13,10 @@ import {
 } from '@/types/api';
 import { request } from '@/utils/request';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -66,21 +66,50 @@ api.interceptors.response.use(
 // Auth API
 export const login = async (data: { username: string; password: string }): Promise<LoginResponse> => {
   console.log('API login attempt:', { username: data.username });
-  const formData = new URLSearchParams(data);
-  const response = await request<LoginResponse>('/api/v1/auth/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    data: formData.toString(),
-  });
-  console.log('API login response:', { hasToken: !!response.access_token });
-  return response;
+  try {
+    const formData = new URLSearchParams();
+    formData.append('username', data.username); // FastAPI OAuth2 expects 'username'
+    formData.append('password', data.password);
+    
+    const response = await request<LoginResponse>('/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+      },
+      data: formData.toString(),
+    });
+    
+    console.log('Raw login response:', response);
+
+    // Handle both possible response formats
+    const token = typeof response === 'object' ? response.access_token : response;
+    
+    if (token) {
+      localStorage.setItem('token', token);
+      console.log('API login successful:', { hasToken: true });
+      return {
+        access_token: token,
+        token_type: 'bearer'
+      };
+    } else {
+      console.error('API login failed: Invalid response format', response);
+      throw new Error('Invalid response format from server');
+    }
+  } catch (error: any) {
+    console.error('API login error:', error);
+    // If we have a response with an error message, use it
+    if (error.response?.data?.detail) {
+      throw new Error(error.response.data.detail);
+    }
+    // Otherwise throw the original error
+    throw error;
+  }
 };
 
 export const register = async (data: RegisterData): Promise<User> => {
   console.log('API register attempt:', { email: data.email, username: data.username });
-  const response = await request<User>('/api/v1/auth/register', { 
+  const response = await request<User>('/auth/register', { 
     method: 'POST', 
     data 
   });
@@ -90,107 +119,165 @@ export const register = async (data: RegisterData): Promise<User> => {
 
 // Agent API
 export const getAgents = (): Promise<Agent[]> =>
-  request<Agent[]>('/api/v1/agents');
+  request<Agent[]>('/agents/');
 
 export const getAgent = async (id: string): Promise<Agent> => {
-  const response = await api.get(`/api/v1/agents/${id}`);
-  return response.data;
+  return request<Agent>(`/agents/${id}`);
 };
 
-export const createAgent = (data: AgentCreate): Promise<Agent> =>
-  request<Agent>('/api/v1/agents', { method: 'POST', data });
+export const createAgent = (data: AgentFormData): Promise<Agent> =>
+  request<Agent>('/agents/', {
+    method: 'POST',
+    data: {
+      name: data.name,
+      description: data.description,
+      agent_type: data.type,
+      config: data.config,
+      is_active: true
+    }
+  });
 
-export const updateAgent = (id: string, data: AgentUpdate): Promise<Agent> =>
-  request<Agent>(`/api/v1/agents/${id}`, { method: 'PUT', data });
+export const updateAgent = (id: string, data: {
+  name: string;
+  description: string;
+  agent_type: string;
+  config: {
+    model: string;
+    systemPrompt: string;
+    temperature: number;
+    maxTokens: number;
+    tools: string[];
+  };
+  is_active: boolean;
+}): Promise<Agent> =>
+  request<Agent>(`/agents/${id}`, {
+    method: 'PUT',
+    data: {
+      name: data.name,
+      description: data.description,
+      agent_type: data.agent_type,
+      config: {
+        model: data.config.model || 'gpt-4',
+        systemPrompt: data.config.systemPrompt || '',
+        temperature: data.config.temperature || 0.7,
+        maxTokens: data.config.maxTokens || 2000,
+        tools: data.config.tools || []
+      },
+      is_active: data.is_active
+    }
+  });
 
 export const deleteAgent = (id: string): Promise<void> =>
-  request<void>(`/api/v1/agents/${id}`, { method: 'DELETE' });
+  request<void>(`/agents/${id}`, { method: 'DELETE' });
 
 export const executeAgent = async (id: string, input: string): Promise<AgentExecution> => {
-  const response = await api.post(`/api/v1/agents/${id}/execute`, { input });
-  return response.data;
+  return request<AgentExecution>(`/agents/${id}/execute/`, {
+    method: 'POST',
+    data: { input_text: input }
+  });
 };
 
 // Workflow API
 export const getWorkflows = (): Promise<Workflow[]> =>
-  request<Workflow[]>('/api/v1/workflows');
+  request<Workflow[]>('/workflows/');
 
 export const getWorkflow = async (id: string): Promise<Workflow> => {
-  const response = await api.get(`/api/v1/workflows/${id}`);
-  return response.data;
+  return request<Workflow>(`/workflows/${id}/`);
 };
 
 export const createWorkflow = (data: WorkflowFormData): Promise<Workflow> =>
-  request<Workflow>('/api/v1/workflows', { method: 'POST', data });
+  request<Workflow>('/workflows/', { method: 'POST', data });
 
 export const updateWorkflow = (id: string, data: WorkflowFormData): Promise<Workflow> =>
-  request<Workflow>(`/api/v1/workflows/${id}`, { method: 'PUT', data });
+  request<Workflow>(`/workflows/${id}/`, { method: 'PUT', data });
 
 export const deleteWorkflow = (id: string): Promise<void> =>
-  request<void>(`/api/v1/workflows/${id}`, { method: 'DELETE' });
+  request<void>(`/workflows/${id}/`, { method: 'DELETE' });
 
 export const executeWorkflow = async (id: string, data: Record<string, any>): Promise<ExecutionData> => {
-  const response = await api.post(`/api/v1/workflows/${id}/execute`, data);
-  return response.data;
+  return request<ExecutionData>(`/workflows/${id}/execute/`, {
+    method: 'POST',
+    data
+  });
 };
 
 // Task API
-export const getTasks = (): Promise<TaskData[]> =>
-  request<TaskData[]>('/api/v1/tasks');
+interface TaskFilters {
+  type?: TaskType;
+  status?: TaskStatus;
+  workflow_id?: string;
+  skip?: number;
+  limit?: number;
+}
+interface CreateTaskRequest {
+  name: string;
+  description: string;
+  type: TaskType;
+  agent_id: string;
+  workflow_id: string;
+  order?: number;
+  config?: Record<string, any>;
+}
+export const getTasks = async (filters: TaskFilters = {}): Promise<Task[]> => {
+  return request<Task[]>('/tasks/', { params: filters });
+};
 
 export const getTask = async (id: string): Promise<TaskData> => {
-  const response = await api.get(`/api/v1/tasks/${id}`);
-  return response.data;
+  return request<TaskData>(`/tasks/${id}/`);
 };
 
-export const createTask = (data: TaskData): Promise<TaskData> =>
-  request<TaskData>('/api/v1/tasks', { method: 'POST', data });
-
-export const updateTask = async (workflowId: string, taskId: string, data: Partial<TaskData>): Promise<TaskData> => {
-  try {
-    const response = await api.put(`/workflows/${workflowId}/tasks/${taskId}`, data);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.detail || '更新任务失败');
-  }
+export const createTask = async (data: CreateTaskRequest): Promise<Task> => {
+  return request<Task>('/tasks/', {
+    method: 'POST',
+    data: {
+      name: data.name,
+      description: data.description,
+      type: data.type,
+      agent_id: data.agent_id,
+      workflow_id: data.workflow_id,
+      order: data.order || 0,
+      config: data.config || {}
+    }
+  });
 };
 
-export const deleteTask = async (workflowId: string, taskId: string): Promise<void> => {
-  try {
-    await api.delete(`/workflows/${workflowId}/tasks/${taskId}`);
-  } catch (error: any) {
-    throw new Error(error.response?.data?.detail || '删除任务失败');
-  }
+export const updateTaskStatus = async (taskId: string, status: TaskStatus, error_message?: string): Promise<Task> => {
+  return request<Task>(`/tasks/${taskId}/status/`, {
+    method: 'PUT',
+    data: { status, error_message },
+  });
+};
+
+export const deleteTask = async (taskId: string): Promise<void> => {
+  return request<void>(`/tasks/${taskId}/`, { method: 'DELETE' });
 };
 
 // Execution API
-export const getExecutions = (): Promise<ExecutionData[]> =>
-  request<ExecutionData[]>('/api/executions');
+export const getExecutions = async (params?: { skip?: number; limit?: number }): Promise<ExecutionData[]> => {
+  return request<ExecutionData[]>('/executions/', { params });
+};
 
 export const getExecution = async (id: string): Promise<ExecutionData> => {
-  const response = await api.get(`/executions/${id}`);
-  return response.data;
+  return request<ExecutionData>(`/executions/${id}/`);
 };
 
-export const getExecutionLogs = async (id: string): Promise<ExecutionData['logs']> => {
-  const response = await api.get(`/executions/${id}/logs`);
-  return response.data;
+export const stopExecution = async (id: string): Promise<void> => {
+  return request<void>(`/executions/${id}/stop/`, {
+    method: 'POST'
+  });
 };
-
-export const createExecution = (data: ExecutionData): Promise<ExecutionData> =>
-  request<ExecutionData>('/api/executions', { method: 'POST', data });
 
 // User API
 export const getUsers = async (): Promise<User[]> => {
   console.log('API fetching users');
-  const response = await request<User[]>('/api/v1/users');
+  const response = await request<User[]>('/users');
   console.log('API users response:', response);
   return response;
 };
 
 export const getCurrentUser = async (): Promise<User> => {
   console.log('API fetching current user');
-  const response = await request<User>('/api/v1/users/me');
+  const response = await request<User>('/users/me');
   console.log('API current user response:', response);
   return response;
 };
@@ -204,18 +291,18 @@ export const logout = (): void => {
 
 // Knowledge Base API
 export const getKnowledgeBases = (): Promise<KnowledgeBase[]> =>
-  request<KnowledgeBase[]>('/api/knowledge-bases');
+  request<KnowledgeBase[]>('/knowledge-bases');
 
 export const getKnowledgeBase = (id: string): Promise<KnowledgeBase> =>
-  request<KnowledgeBase>(`/api/knowledge-bases/${id}`);
+  request<KnowledgeBase>(`/knowledge-bases/${id}`);
 
 export const createKnowledgeBase = (data: KnowledgeBaseCreate): Promise<KnowledgeBase> =>
-  request<KnowledgeBase>('/api/knowledge-bases', { method: 'POST', data });
+  request<KnowledgeBase>('/knowledge-bases', { method: 'POST', data });
 
 export const updateKnowledgeBase = (id: string, data: KnowledgeBaseUpdate): Promise<KnowledgeBase> =>
-  request<KnowledgeBase>(`/api/knowledge-bases/${id}`, { method: 'PUT', data });
+  request<KnowledgeBase>(`/knowledge-bases/${id}`, { method: 'PUT', data });
 
 export const deleteKnowledgeBase = (id: string): Promise<void> =>
-  request<void>(`/api/knowledge-bases/${id}`, { method: 'DELETE' });
+  request<void>(`/knowledge-bases/${id}`, { method: 'DELETE' });
 
 export default api; 

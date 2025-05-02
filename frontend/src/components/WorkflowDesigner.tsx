@@ -8,6 +8,7 @@ import ConditionNode from './nodes/ConditionNode';
 import FormDesigner from './FormDesigner';
 import styles from '@/styles/WorkflowDesigner.module.css';
 import 'reactflow/dist/style.css';
+import { message } from 'antd';
 
 // 创建一个记忆化的自定义节点包装组件
 const CustomNodeWrapper = memo(({ id, data, ...props }: any) => {
@@ -203,13 +204,61 @@ const groupedNodeTypes = nodeTypeList.reduce((acc, node) => {
   return acc;
 }, {} as Record<string, NodeType[]>);
 
-interface WorkflowDesignerProps {
-  onChange?: (data: { nodes: Node[]; edges: Edge[] }) => void;
+interface BackendNode {
+  id: string;
+  type: string;
+  name: string;
+  config: Record<string, any>;
+  position: { x: number; y: number };
 }
 
-const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({ onChange }) => {
-  const [nodes, setNodes] = useNodesState(initialNodes);
-  const [edges, setEdges] = useEdgesState([]);
+interface BackendEdge {
+  source: string;
+  target: string;
+  type?: string;
+}
+
+interface WorkflowDesignerProps {
+  onChange?: (data: { nodes: Node[]; edges: Edge[] }) => void;
+  initialNodes?: BackendNode[];
+  initialEdges?: BackendEdge[];
+  readOnly?: boolean;
+}
+
+const convertToReactFlowNode = (node: BackendNode): Node => ({
+  id: node.id,
+  type: node.type === 'start' || node.type === 'end' ? node.type : 'custom',
+  position: node.position,
+  data: {
+    type: node.type,
+    label: node.name,
+    config: node.config || {},
+  },
+});
+
+const convertToReactFlowEdge = (edge: BackendEdge): Edge => ({
+  id: `${edge.source}-${edge.target}`,
+  source: edge.source,
+  target: edge.target,
+  type: edge.type || 'default',
+});
+
+const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({ 
+  onChange,
+  initialNodes: propInitialNodes = [],
+  initialEdges: propInitialEdges = [],
+  readOnly = false,
+}) => {
+  const [nodes, setNodes] = useNodesState(
+    propInitialNodes.length > 0 
+      ? propInitialNodes.map(convertToReactFlowNode)
+      : initialNodes
+  );
+  const [edges, setEdges] = useEdgesState(
+    propInitialEdges.length > 0
+      ? propInitialEdges.map(convertToReactFlowEdge)
+      : []
+  );
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const [isFormDesignerOpen, setIsFormDesignerOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -257,6 +306,7 @@ const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({ onChange }) => {
       const data = event.dataTransfer.getData('application/reactflow');
       
       if (!reactFlowBounds || !reactFlowInstance) {
+        message.error('无法获取设计器边界');
         return;
       }
 
@@ -265,9 +315,11 @@ const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({ onChange }) => {
 
         // 检查是否已经存在开始或结束节点
         if (nodeType.type === 'start' && nodes.some(node => node.type === 'start')) {
+          message.warning('已存在开始节点');
           return;
         }
         if (nodeType.type === 'end' && nodes.some(node => node.type === 'end')) {
+          message.warning('已存在结束节点');
           return;
         }
 
@@ -288,8 +340,8 @@ const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({ onChange }) => {
             : 'custom',
           position,
           data: {
-            label: nodeType.label,
-            description: nodeType.description,
+            label: nodeType.label || '新节点',
+            description: nodeType.description || '',
             type: nodeType.type,
             onDoubleClick: handleNodeDoubleClick,
             config: nodeType.type === 'form' ? { formSchema: { fields: [] } } : {},
@@ -304,6 +356,7 @@ const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({ onChange }) => {
         });
       } catch (error) {
         console.error('Error dropping node:', error);
+        message.error('添加节点失败');
       }
     },
     [reactFlowInstance, nodes, handleNodeDoubleClick, setNodes]
@@ -361,38 +414,43 @@ const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({ onChange }) => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.sidebar}>
-        <div className={styles.sidebarHeader}>工作流组件</div>
-        {Object.entries(groupedNodeTypes).map(([category, nodes]) => (
-          <div key={category} className={styles.nodeCategory}>
-            <div className={styles.categoryTitle}>{category}</div>
-            {nodes.map((nodeType) => (
-              <div
-                key={nodeType.type}
-                className={`${styles.nodeTypeItem} ${nodeType.isSpecial ? styles.specialNode : ''}`}
-                onDragStart={(event) => onDragStart(event, nodeType)}
-                draggable
-              >
-                <div className={styles.nodeTypeLabel}>{nodeType.label}</div>
-                <div className={styles.nodeTypeDescription}>{nodeType.description}</div>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-      <div className={styles.designer} ref={reactFlowWrapper}>
+      {!readOnly && (
+        <div className={styles.sidebar}>
+          <div className={styles.sidebarHeader}>工作流组件</div>
+          {Object.entries(groupedNodeTypes).map(([category, nodes]) => (
+            <div key={category} className={styles.nodeCategory}>
+              <div className={styles.categoryTitle}>{category}</div>
+              {nodes.map((nodeType) => (
+                <div
+                  key={nodeType.type}
+                  className={`${styles.nodeTypeItem} ${nodeType.isSpecial ? styles.specialNode : ''}`}
+                  onDragStart={(event) => onDragStart(event, nodeType)}
+                  draggable
+                >
+                  <div className={styles.nodeTypeLabel}>{nodeType.label}</div>
+                  <div className={styles.nodeTypeDescription}>{nodeType.description}</div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+      <div className={`${styles.designer} ${readOnly ? styles.fullWidth : ''}`} ref={reactFlowWrapper}>
         <div className={styles.flowWrapper}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onEdgeUpdate={onEdgeUpdate}
+            onNodesChange={readOnly ? undefined : onNodesChange}
+            onEdgesChange={readOnly ? undefined : onEdgesChange}
+            onConnect={readOnly ? undefined : onConnect}
+            onEdgeUpdate={readOnly ? undefined : onEdgeUpdate}
             onInit={setReactFlowInstance}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
+            onDrop={readOnly ? undefined : onDrop}
+            onDragOver={readOnly ? undefined : onDragOver}
             nodeTypes={NODE_TYPES}
+            nodesDraggable={!readOnly}
+            nodesConnectable={!readOnly}
+            elementsSelectable={!readOnly}
             fitView
             snapToGrid
             snapGrid={[20, 20]}
@@ -429,17 +487,19 @@ const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({ onChange }) => {
                 }
               }}
             />
-            <Panel position="top-right" className={styles.helpPanel}>
-              <div className={styles.helpContent}>
-                <h4>快捷键说明</h4>
-                <ul>
-                  <li>空格 + 拖动：平移画布</li>
-                  <li>Command/Shift + 点击：多选节点</li>
-                  <li>Delete/Backspace：删除选中</li>
-                  <li>Command + 滚轮：缩放画布</li>
-                </ul>
-              </div>
-            </Panel>
+            {!readOnly && (
+              <Panel position="top-right" className={styles.helpPanel}>
+                <div className={styles.helpContent}>
+                  <h4>快捷键说明</h4>
+                  <ul>
+                    <li>空格 + 拖动：平移画布</li>
+                    <li>Command/Shift + 点击：多选节点</li>
+                    <li>Delete/Backspace：删除选中</li>
+                    <li>Command + 滚轮：缩放画布</li>
+                  </ul>
+                </div>
+              </Panel>
+            )}
           </ReactFlow>
         </div>
       </div>
@@ -448,7 +508,6 @@ const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({ onChange }) => {
         title="表单设计器"
         open={isFormDesignerOpen}
         onCancel={() => {
-          console.log('Closing form designer modal');
           setIsFormDesignerOpen(false);
           setSelectedNode(null);
         }}

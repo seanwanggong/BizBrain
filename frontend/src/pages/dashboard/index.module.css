@@ -2,6 +2,36 @@
   padding: 24px;
 }
 
+.mainContent {
+  margin-top: 24px;
+}
+
+.actionBar {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.comingSoon {
+  padding: 48px;
+  text-align: center;
+  background: #fafafa;
+  border-radius: 8px;
+  color: #666;
+}
+
+.comingSoon h3 {
+  margin: 16px 0 8px;
+  font-size: 18px;
+  color: #333;
+}
+
+.comingSoon p {
+  margin: 0;
+  font-size: 14px;
+}
+
 .section {
   margin-top: 32px;
 }
@@ -82,5 +112,15 @@
 
   .statsCard {
     padding: 16px;
+  }
+
+  .actionBar {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .actionBar :global(.ant-space) {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 } 

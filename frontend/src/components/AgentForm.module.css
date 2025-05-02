@@ -1,30 +1,119 @@
-.form {
+.formContainer {
   width: 100%;
-  min-height: calc(100vh - 64px); /* 减去顶部导航栏的高度 */
-  padding: 24px 50px;
-  background: #f7f9fc;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
 }
 
-.form > :global(.ant-row) {
+.form {
   width: 100%;
-  margin: 0 auto;
 }
 
 .card {
-  height: 100%;
   margin-bottom: 24px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  background: #fff;
-  border: none;
-  width: 100%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
-.card:last-child {
+.card :global(.ant-card-head) {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 24px;
+}
+
+.card :global(.ant-card-head-title) {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.card :global(.ant-card-body) {
+  padding: 24px;
+}
+
+.formActions {
+  margin-top: 24px;
+  text-align: right;
+}
+
+.formActions button {
+  min-width: 88px;
+  border-radius: 6px;
+}
+
+.formActions :global(.ant-btn-primary) {
+  background: #1890ff;
+  border-color: #1890ff;
+  box-shadow: 0 2px 0 rgba(24, 144, 255, 0.1);
+}
+
+.formActions :global(.ant-btn-primary:hover) {
+  background: #40a9ff;
+  border-color: #40a9ff;
+}
+
+.form :global(.ant-form-item) {
   margin-bottom: 24px;
+}
+
+.form :global(.ant-form-item-label) {
+  padding-bottom: 8px;
+}
+
+.form :global(.ant-form-item-label > label) {
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.form :global(.ant-form-item-extra) {
+  margin-top: 4px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.form :global(.ant-input),
+.form :global(.ant-select-selector),
+.form :global(.ant-input-number) {
+  border-radius: 6px;
+}
+
+.form :global(.ant-input:focus),
+.form :global(.ant-select-selector:focus),
+.form :global(.ant-input-number:focus) {
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+.form :global(.ant-select-multiple .ant-select-selection-item) {
+  border-radius: 4px;
+  background: #f3f4f6;
+  border: none;
+  color: #374151;
+}
+
+.templateForm {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+.templateHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.templateExtra {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.submitButton {
+  margin-top: 32px;
+  text-align: right;
+}
+
+.submitButton button {
+  min-width: 120px;
 }
 
 .optionContent {
@@ -34,63 +123,106 @@
 .optionLabel {
   font-size: 14px;
   font-weight: 500;
-  color: #1f2937;
   margin-bottom: 4px;
 }
 
 .optionDescription {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+/* 类型选择器样式 */
+.typeSelector {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 下拉选择器样式修复 */
+.typeSelect {
+  width: 100%;
+}
+
+.typeSelect :global(.ant-select-selector) {
+  padding: 0 !important;
+  border-radius: 8px !important;
+  height: auto !important;
+  min-height: 32px;
+}
+
+.typeSelect :global(.ant-select-selection-search) {
+  display: none;
+}
+
+.typeSelect :global(.ant-select-selection-item) {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.typeOption {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px;
+  width: 100%;
+  border: none;
+  background: transparent;
+}
+
+.typeIcon {
+  flex-shrink: 0;
+  margin-right: 12px;
+  font-size: 20px;
+  color: #666;
+}
+
+.typeContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.typeTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #262626;
+  margin-bottom: 4px;
+}
+
+.typeDescription {
+  font-size: 12px;
+  color: #666;
   line-height: 1.5;
 }
 
-.footer {
-  margin: 32px 0 0;
-  padding: 20px 50px;
-  background: #fff;
-  border-top: 1px solid #f0f0f0;
-  display: flex;
-  justify-content: center;
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
-  width: 100%;
+/* 下拉面板样式 */
+.typeSelect :global(.ant-select-dropdown) {
+  padding: 4px;
+  border-radius: 8px;
 }
 
-.footer > :global(.ant-space) {
-  width: 100%;
-  justify-content: flex-end;
+.typeSelect :global(.ant-select-item) {
+  padding: 0 !important;
 }
 
-/* System prompt styles */
-.systemPrompt {
-  font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", monospace;
-  font-size: 14px !important;
-  line-height: 1.6 !important;
-  background-color: #fafafa;
+.typeSelect :global(.ant-select-item-option-active) {
+  background-color: transparent !important;
 }
 
-.systemPrompt:focus {
-  background-color: #fff;
+.typeSelect :global(.ant-select-item-option-selected) {
+  background-color: #e6f7ff !important;
 }
 
-/* Tool select styles */
+/* 工具选择器样式 */
 .toolSelect {
   width: 100%;
 }
 
 .toolSelect :global(.ant-select-selection-item) {
-  height: auto !important;
   padding: 4px 8px !important;
 }
 
-/* Form item styles */
+/* 表单项样式 */
 .form :global(.ant-form-item) {
   margin-bottom: 24px;
-}
-
-.form :global(.ant-form-item):last-child {
-  margin-bottom: 0;
 }
 
 .form :global(.ant-form-item-label) {
@@ -98,165 +230,97 @@
 }
 
 .form :global(.ant-form-item-label > label) {
-  font-size: 14px;
   font-weight: 500;
-  color: #1f2937;
-  height: 22px;
-}
-
-.form :global(.ant-form-item-explain) {
-  font-size: 13px;
-  min-height: 22px;
-  margin-top: 4px;
+  color: rgba(0, 0, 0, 0.85);
 }
 
 .form :global(.ant-form-item-extra) {
-  font-size: 13px;
-  color: #6b7280;
   margin-top: 4px;
+  color: rgba(0, 0, 0, 0.45);
 }
 
-/* Input styles */
+/* 输入框样式 */
 .form :global(.ant-input),
-.form :global(.ant-input-number),
-.form :global(.ant-select-selector) {
+.form :global(.ant-select-selector),
+.form :global(.ant-input-number) {
   border-radius: 6px;
-  border-color: #e5e7eb;
-  transition: all 0.2s;
-}
-
-.form :global(.ant-input),
-.form :global(.ant-input-number-input) {
-  padding: 8px 12px;
-  font-size: 14px;
-}
-
-.form :global(.ant-select-selector) {
-  min-height: 38px !important;
-  padding: 4px 12px !important;
-}
-
-.form :global(.ant-select-selection-item),
-.form :global(.ant-select-selection-placeholder) {
-  line-height: 30px !important;
-  font-size: 14px;
-}
-
-.form :global(.ant-input:hover),
-.form :global(.ant-input-number:hover),
-.form :global(.ant-select-selector:hover) {
-  border-color: #1890ff;
 }
 
 .form :global(.ant-input:focus),
-.form :global(.ant-input-number-focused),
-.form :global(.ant-select-focused .ant-select-selector) {
-  border-color: #1890ff;
+.form :global(.ant-select-selector:focus),
+.form :global(.ant-input-number:focus) {
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
 }
 
-/* Card styles */
-.form :global(.ant-card-head) {
-  min-height: auto;
-  padding: 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
-  background: #fafbfc;
-  border-radius: 8px 8px 0 0;
-}
-
-.form :global(.ant-card-head-title) {
-  padding: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #111827;
-}
-
-.form :global(.ant-card-body) {
-  padding: 24px;
-}
-
-/* TextArea styles */
-.form :global(.ant-input-textarea textarea.ant-input) {
-  padding: 8px 12px;
-  font-size: 14px;
-  line-height: 1.6;
-  min-height: 120px;
-}
-
-/* Button styles */
-.form :global(.ant-btn) {
-  height: 38px;
-  padding: 6px 20px;
-  font-size: 14px;
+/* 按钮样式 */
+.formActions button {
+  min-width: 88px;
   border-radius: 6px;
-  font-weight: 500;
 }
 
-/* Tooltip icon */
-.form :global(.anticon-question-circle) {
-  font-size: 15px;
-  color: #9ca3af;
-  margin-left: 4px;
+.formActions :global(.ant-btn-primary) {
+  background: #1890ff;
+  border-color: #1890ff;
+  box-shadow: 0 2px 0 rgba(24, 144, 255, 0.1);
 }
 
-/* Select multiple styles */
-.form :global(.ant-select-multiple .ant-select-selection-item) {
-  background: #f3f4f6;
-  border: none;
-  border-radius: 4px;
-  color: #374151;
-  padding: 4px 8px;
-  margin: 2px 4px 2px 0;
-  height: 28px;
-  line-height: 20px;
+.formActions :global(.ant-btn-primary:hover) {
+  background: #40a9ff;
+  border-color: #40a9ff;
 }
 
-.form :global(.ant-select-multiple .ant-select-selection-item-remove) {
-  color: #6b7280;
-  font-size: 12px;
-  margin-left: 6px;
-}
-
-.form :global(.ant-select-multiple .ant-select-selection-search) {
-  margin-inline-start: 0;
-  margin-inline-end: 4px;
-}
-
-.form :global(.ant-select-dropdown) {
-  padding: 4px;
-}
-
-.form :global(.ant-select-item) {
-  padding: 8px;
-  border-radius: 4px;
-}
-
-.form :global(.ant-select-item-option-content) {
-  display: flex;
-  flex-direction: column;
-}
-
-.form :global(.ant-select-selection-placeholder) {
-  color: #9ca3af;
-}
-
+/* 模板表单样式 */
 .templateSection {
+  background: #f9fafb;
+  padding: 24px;
+  border-radius: 8px;
   margin-bottom: 24px;
 }
 
 .templateHeader {
   display: flex;
-  flex-direction: column;
-  margin-bottom: 16px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.templateHeader span:first-child {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1f2937;
 }
 
 .templateExtra {
-  color: rgba(0, 0, 0, 0.45);
   font-size: 14px;
+  color: #6b7280;
 }
 
-.templateForm {
-  background: #fafafa;
-  padding: 24px;
-  border-radius: 8px;
+/* 系统提示词输入框 */
+.systemPrompt {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+}
+
+/* 底部按钮 */
+.footer {
+  margin-top: 32px;
+  text-align: right;
+}
+
+.footer :global(.ant-btn) {
+  min-width: 88px;
+  border-radius: 6px;
+  height: 38px;
+  padding: 0 20px;
+}
+
+.footer :global(.ant-btn-primary) {
+  background: #1890ff;
+  border-color: #1890ff;
+  box-shadow: 0 2px 0 rgba(24, 144, 255, 0.1);
+}
+
+.footer :global(.ant-btn-primary:hover) {
+  background: #40a9ff;
+  border-color: #40a9ff;
 } 

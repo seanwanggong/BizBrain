@@ -1,4 +1,5 @@
 import logging
+import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
@@ -6,11 +7,19 @@ from app.core.config import settings
 from app.core.init_db import init_db
 from app.api.v1.endpoints import docs
 
-# 配置日志
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# 配置根日志记录器
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.DEBUG)
+
+# 添加控制台处理器
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+root_logger.addHandler(console_handler)
+
+# 配置 SQLAlchemy 日志
+logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -35,7 +44,9 @@ app.include_router(api_router)
 
 @app.on_event("startup")
 async def startup_event():
+    logging.info("Starting up application...")
     init_db()
+    logging.info("Application startup complete")
 
 @app.get("/")
 async def root():

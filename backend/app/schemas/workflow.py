@@ -27,8 +27,7 @@ class WorkflowUpdate(WorkflowBase):
 class WorkflowResponse(WorkflowBase):
     """工作流响应模型"""
     id: UUID
-    user_id: UUID
-    tasks: List[WorkflowTaskResponse] = []
+    tasks: List[WorkflowTaskResponse]
     created_at: datetime
     updated_at: Optional[datetime] = None
     is_active: bool = True

@@ -1,6 +1,7 @@
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from datetime import datetime
+from uuid import UUID
 
 from ..models.workflow import Workflow, WorkflowExecution
 from ..schemas.workflow import WorkflowCreate, WorkflowUpdate, WorkflowExecutionCreate, WorkflowExecutionUpdate
@@ -10,18 +11,20 @@ class WorkflowService:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_workflow(self, workflow_id: int) -> Optional[Workflow]:
+    def get_workflow(self, workflow_id: UUID) -> Optional[Workflow]:
         return self.db.query(Workflow).filter(Workflow.id == workflow_id).first()
 
-    def get_workflows(self, skip: int = 0, limit: int = 100, user_id: Optional[int] = None) -> List[Workflow]:
+    def get_workflows(self, skip: int = 0, limit: int = 100, user_id: Optional[UUID] = None) -> List[Workflow]:
         query = self.db.query(Workflow)
         if user_id:
             query = query.filter(Workflow.user_id == user_id)
         return query.offset(skip).limit(limit).all()
 
-    def create_workflow(self, workflow: WorkflowCreate, user_id: int) -> Workflow:
+    def create_workflow(self, workflow: WorkflowCreate, user_id: UUID) -> Workflow:
         db_workflow = Workflow(
-            **workflow.model_dump(),
+            name=workflow.name,
+            description=workflow.description,
+            config=workflow.config,
             user_id=user_id
         )
         self.db.add(db_workflow)
@@ -29,7 +32,7 @@ class WorkflowService:
         self.db.refresh(db_workflow)
         return db_workflow
 
-    def update_workflow(self, workflow_id: int, workflow: WorkflowUpdate) -> Optional[Workflow]:
+    def update_workflow(self, workflow_id: UUID, workflow: WorkflowUpdate) -> Optional[Workflow]:
         db_workflow = self.get_workflow(workflow_id)
         if not db_workflow:
             return None
@@ -42,7 +45,7 @@ class WorkflowService:
         self.db.refresh(db_workflow)
         return db_workflow
 
-    def delete_workflow(self, workflow_id: int) -> bool:
+    def delete_workflow(self, workflow_id: UUID) -> bool:
         db_workflow = self.get_workflow(workflow_id)
         if not db_workflow:
             return False

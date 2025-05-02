@@ -4,16 +4,8 @@ import { PlusOutlined, SyncOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import * as api from '@/utils/api';
+import { Workflow } from '@/types/workflow';
 import styles from './index.module.css';
-
-interface Workflow {
-  id: string;
-  name: string;
-  description: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
 
 const WorkflowsPage = () => {
   const router = useRouter();
@@ -23,8 +15,12 @@ const WorkflowsPage = () => {
   const fetchWorkflows = async () => {
     try {
       setLoading(true);
-      const data = await api.getWorkflows();
-      setWorkflows(data);
+      const response = await api.getWorkflows();
+      const workflows = response.map(workflow => ({
+        ...workflow,
+        config: workflow.config || { nodes: [], edges: [] }
+      }));
+      setWorkflows(workflows);
     } catch (error) {
       message.error('获取工作流列表失败');
     } finally {
@@ -33,8 +29,10 @@ const WorkflowsPage = () => {
   };
 
   useEffect(() => {
-    fetchWorkflows();
-  }, []);
+    if (router.isReady) {
+      fetchWorkflows();
+    }
+  }, [router.isReady]);
 
   const columns = [
     {
@@ -53,28 +51,29 @@ const WorkflowsPage = () => {
     },
     {
       title: '状态',
-      dataIndex: 'status',
       key: 'status',
-      render: (status: string) => {
+      render: (_: any, record: Workflow) => {
+        const nodes = record.config?.nodes || [];
+        const status = nodes.length > 0 ? 'active' : 'inactive';
         const statusMap = {
-          active: { color: 'success', text: '运行中' },
-          inactive: { color: 'default', text: '已停止' },
+          active: { color: 'success', text: '已配置' },
+          inactive: { color: 'default', text: '未配置' },
           error: { color: 'error', text: '错误' },
         };
-        const { color, text } = statusMap[status as keyof typeof statusMap] || { color: 'default', text: status };
+        const { color, text } = statusMap[status as keyof typeof statusMap];
         return <Tag color={color}>{text}</Tag>;
       },
     },
     {
       title: '创建时间',
-      dataIndex: 'created_at',
-      key: 'created_at',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
       render: (date: string) => new Date(date).toLocaleString(),
     },
     {
       title: '更新时间',
-      dataIndex: 'updated_at',
-      key: 'updated_at',
+      dataIndex: 'updatedAt',
+      key: 'updatedAt',
       render: (date: string) => new Date(date).toLocaleString(),
     },
     {

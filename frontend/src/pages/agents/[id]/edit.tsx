@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Typography, message } from 'antd';
+import { message } from 'antd';
 import { useRouter } from 'next/router';
-import AgentForm from '@/components/AgentForm';
+import DashboardLayout from '@/components/layouts/DashboardLayout';
+import AgentForm from '../../../components/AgentForm';
 import { getAgent, updateAgent } from '@/utils/api';
-import { Agent, AgentUpdate } from '@/types/agent';
-
-const { Title } = Typography;
-const { Content } = Layout;
+import { Agent } from '@/types/agent';
 
 const EditAgentPage: React.FC = () => {
   const router = useRouter();
   const { id } = router.query;
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -22,22 +21,39 @@ const EditAgentPage: React.FC = () => {
 
   const fetchAgent = async () => {
     try {
-      const data = await getAgent(Number(id));
+      const data = await getAgent(id as string);
       setAgent(data);
     } catch (error) {
-      message.error('Failed to fetch agent');
+      message.error('获取Agent失败');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (values: AgentUpdate) => {
+  const handleSubmit = async (values: any) => {
+    if (!id) return;
+    
+    setSubmitting(true);
     try {
-      await updateAgent(Number(id), values);
-      message.success('Agent updated successfully');
+      await updateAgent(id as string, {
+        name: values.name,
+        description: values.description,
+        agent_type: values.type,
+        config: {
+          model: values.config?.model || 'gpt-4',
+          systemPrompt: values.config?.systemPrompt || '',
+          temperature: values.config?.temperature || 0.7,
+          maxTokens: values.config?.maxTokens || 2000,
+          tools: values.config?.tools || []
+        },
+        is_active: true
+      });
+      message.success('Agent更新成功');
       router.push('/agents');
     } catch (error) {
-      message.error('Failed to update agent');
+      message.error('更新Agent失败');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -46,25 +62,47 @@ const EditAgentPage: React.FC = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <DashboardLayout title="编辑Agent">
+        <div>加载中...</div>
+      </DashboardLayout>
+    );
   }
 
   if (!agent) {
-    return <div>Agent not found</div>;
+    return (
+      <DashboardLayout title="编辑Agent">
+        <div>Agent不存在</div>
+      </DashboardLayout>
+    );
   }
 
+  // 转换数据格式以匹配表单结构
+  const initialValues = {
+    name: agent.name,
+    description: agent.description,
+    type: agent.agent_type,
+    config: {
+      model: agent.config.model,
+      systemPrompt: agent.config.systemPrompt,
+      temperature: agent.config.temperature,
+      maxTokens: agent.config.maxTokens,
+      tools: agent.config.tools || []
+    }
+  };
+
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Content style={{ padding: '24px' }}>
-        <Title level={2}>Edit Agent</Title>
-        <AgentForm
-          initialValues={agent}
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-          isEdit
-        />
-      </Content>
-    </Layout>
+    <DashboardLayout
+      title="编辑Agent"
+      subtitle={agent.name}
+    >
+      <AgentForm
+        initialValues={initialValues}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        loading={submitting}
+      />
+    </DashboardLayout>
   );
 };
 

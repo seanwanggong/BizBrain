@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAppSelector } from '@/store';
 
@@ -26,31 +26,28 @@ const isPublicPath = (path: string) => {
 
 export default function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAppSelector((state) => {
-    console.log('Current auth state:', state.user);
-    return state.user;
-  });
+  const [mounted, setMounted] = useState(false);
+  const { isAuthenticated } = useAppSelector((state) => state.user);
 
   useEffect(() => {
+    setMounted(true);
     // 检查当前路径是否需要鉴权
     const currentPathIsPublic = isPublicPath(router.pathname);
-    console.log('Path check:', {
-      path: router.pathname,
-      isPublic: currentPathIsPublic,
-      isAuthenticated
-    });
     
     if (!isAuthenticated && !currentPathIsPublic) {
-      console.log('Redirecting to login...');
       router.replace('/login');
     }
   }, [isAuthenticated, router.pathname]);
 
-  // 如果是需要鉴权的页面且未登录，返回 null
-  if (!isAuthenticated && !isPublicPath(router.pathname)) {
-    console.log('Not rendering protected content');
+  // 在客户端渲染之前返回 null
+  if (!mounted) {
     return null;
   }
 
-  return <>{children}</>;
+  // 如果是需要鉴权的页面且未登录，返回 null
+  if (!isAuthenticated && !isPublicPath(router.pathname)) {
+    return null;
+  }
+
+  return <div>{children}</div>;
 } 

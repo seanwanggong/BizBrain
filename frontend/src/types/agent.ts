@@ -2,14 +2,12 @@ export interface Agent {
   id: string;
   name: string;
   description: string;
-  type: AgentType;
-  model: string;
-  systemPrompt: string;
-  temperature: number;
-  maxTokens: number;
-  tools: string[];
-  createdAt: string;
-  updatedAt: string;
+  agent_type: string;
+  config: Record<string, any>;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  creator_id: string;
 }
 
 export type AgentType = 'assistant' | 'expert' | 'task' | 'chain';
@@ -29,11 +27,13 @@ export interface AgentFormData {
   name: string;
   description: string;
   type: AgentType;
-  model: string;
-  systemPrompt: string;
-  temperature: number;
-  maxTokens: number;
-  tools: string[];
+  config: {
+    model?: string;
+    systemPrompt?: string;
+    temperature?: number;
+    maxTokens?: number;
+    tools?: string[];
+  };
 }
 
 export const AGENT_TYPES = [
@@ -67,6 +67,7 @@ export interface AgentCreate {
   type: string;
   config: Record<string, any>;
   is_active: boolean;
+  creator_id?: string;
 }
 
 export interface AgentUpdate {
@@ -75,6 +76,7 @@ export interface AgentUpdate {
   type?: string;
   config?: Record<string, any>;
   is_active?: boolean;
+  creator_id?: string;
 }
 
 export interface AgentExecution {

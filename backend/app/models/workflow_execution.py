@@ -28,8 +28,8 @@ class WorkflowExecution(Base):
     created_at = Column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=text('CURRENT_TIMESTAMP'), onupdate=text('CURRENT_TIMESTAMP'), nullable=False)
 
-    # 关系
+    # Relationships
     workflow = relationship("Workflow", back_populates="executions")
     user = relationship("User", back_populates="workflow_executions")
     task_logs = relationship("TaskLog", back_populates="execution")
-    execution_logs = relationship("ExecutionLog", back_populates="execution") 
+    execution_logs = relationship("ExecutionLog", back_populates="workflow_execution", cascade="all, delete-orphan") 

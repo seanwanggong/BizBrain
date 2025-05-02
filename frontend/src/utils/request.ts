@@ -3,7 +3,8 @@ import { message } from 'antd';
 import { store } from '@/store';
 import { logout } from '@/store/slices/userSlice';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = `${BASE_URL}/api/v1`;
 
 // Create axios instance
 const instance = axios.create({
@@ -14,6 +15,53 @@ const instance = axios.create({
   },
 });
 
+// Request deduplication and caching
+interface CacheEntry {
+  promise: Promise<any>;
+  timestamp: number;
+  data?: any;
+}
+
+const pendingRequests = new Map<string, CacheEntry>();
+const CACHE_TTL = 2000; // Cache TTL in milliseconds for GET requests
+
+// Generate cache key for request
+const getCacheKey = (url: string, options?: AxiosRequestConfig): string => {
+  const method = (options?.method || 'GET').toUpperCase();
+  // For GET requests, only use URL and params for cache key
+  if (method === 'GET') {
+    const params = options?.params ? JSON.stringify(options.params) : '';
+    return `${method}:${url}:${params}`;
+  }
+  // For other methods, include the request body
+  const data = options?.data ? JSON.stringify(options.data) : '';
+  return `${method}:${url}:${JSON.stringify(options?.params)}:${data}`;
+};
+
+// Clear expired cache entries
+const clearExpiredCache = () => {
+  const now = Date.now();
+  for (const [key, entry] of pendingRequests.entries()) {
+    if (now - entry.timestamp > CACHE_TTL) {
+      pendingRequests.delete(key);
+    }
+  }
+};
+
+// Normalize URL to handle trailing slashes
+const normalizeUrl = (url: string) => {
+  // Remove trailing slash only for agent endpoints with IDs
+  if (url.includes('/agents/') && /\/agents\/\d+/.test(url) && !url.includes('/execute')) {
+    return url.endsWith('/') ? url.slice(0, -1) : url;
+  }
+  // Add trailing slash for workflow endpoints
+  if (url.includes('/workflows/')) {
+    return url.endsWith('/') ? url : `${url}/`;
+  }
+  // Keep trailing slash for other endpoints
+  return url;
+};
+
 // Request interceptor
 instance.interceptors.request.use(
   (config) => {
@@ -21,9 +69,23 @@ instance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Normalize the URL to prevent redirect issues
+    if (config.url) {
+      config.url = normalizeUrl(config.url);
+    }
+    
+    console.log('Request details:', {
+      url: `${API_BASE_URL}${config.url}`,
+      method: config.method,
+      headers: config.headers,
+      data: config.data,
+      hasToken: !!token,
+    });
     return config;
   },
   (error) => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -31,9 +93,23 @@ instance.interceptors.request.use(
 // Response interceptor
 instance.interceptors.response.use(
   (response) => {
-    return response.data;
+    console.log('Response details:', {
+      url: response.config.url,
+      status: response.status,
+      data: response.data,
+      headers: response.headers,
+    });
+    return response;
   },
   (error) => {
+    console.error('Response error details:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+      headers: error.response?.headers,
+    });
+
     if (error.response) {
       const { status, data, config } = error.response;
       
@@ -74,58 +150,89 @@ instance.interceptors.response.use(
 
 export async function request<T>(url: string, options?: AxiosRequestConfig): Promise<T> {
   try {
-    console.log('Request starting:', { url, method: options?.method || 'GET' });
+    console.log('Request starting:', { url, method: options?.method || 'GET', options });
     
-    const token = localStorage.getItem('token');
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options?.headers,
-    };
+    const normalizedUrl = normalizeUrl(url);
+    const cacheKey = getCacheKey(normalizedUrl, options);
+    const method = (options?.method || 'GET').toUpperCase();
+    
+    // Clear expired cache entries
+    clearExpiredCache();
+    
+    // For GET requests, check cache first
+    if (method === 'GET') {
+      const cachedEntry = pendingRequests.get(cacheKey);
+      if (cachedEntry) {
+        const now = Date.now();
+        // If within TTL and we have cached data, return it immediately
+        if (now - cachedEntry.timestamp <= CACHE_TTL && cachedEntry.data) {
+          console.log('Using cached data:', { url: normalizedUrl });
+          return cachedEntry.data;
+        }
+        // If there's a pending request, return its promise
+        if (cachedEntry.promise) {
+          console.log('Using pending request:', { url: normalizedUrl });
+          return cachedEntry.promise;
+        }
+      }
+    }
+    
+    // Create the new request promise
+    const requestPromise = (async () => {
+      try {
+        const response = await instance.request<T>({
+          url: normalizedUrl,
+          ...options,
+        });
 
-    console.log('Request headers:', { 
-      hasToken: !!token,
-      contentType: headers['Content-Type']
+        if (!response) {
+          console.error('No response received from server');
+          throw new Error('No response received from server');
+        }
+
+        if (!response.data) {
+          console.error('No data in response:', response);
+          throw new Error('No data in response');
+        }
+
+        console.log('Request successful:', {
+          url: normalizedUrl,
+          status: response.status,
+          hasData: !!response.data
+        });
+
+        // For GET requests, cache the response data
+        if (method === 'GET') {
+          pendingRequests.set(cacheKey, {
+            promise: requestPromise,
+            timestamp: Date.now(),
+            data: response.data
+          });
+        }
+
+        return response.data;
+      } finally {
+        // Remove from pending requests after completion for non-GET requests
+        if (method !== 'GET') {
+          pendingRequests.delete(cacheKey);
+        }
+      }
+    })();
+
+    // Store the promise in the cache
+    pendingRequests.set(cacheKey, {
+      promise: requestPromise,
+      timestamp: Date.now()
     });
-
-    const response = await axios({
-      baseURL: API_BASE_URL,
-      url,
-      ...options,
-      headers,
-    });
-
-    console.log('Request successful:', {
-      url,
-      status: response.status,
-      hasData: !!response.data
-    });
-
-    return response.data;
+    
+    return requestPromise;
   } catch (error: any) {
     console.error('Request failed:', {
       url,
       status: error.response?.status,
       message: error.message,
-      data: error.response?.data
+      error
     });
-
-    // Handle error messages
-    if (error.response) {
-      const errorMessage = error.response.data?.detail || error.response.data?.message || '请求失败';
-      message.error(errorMessage);
-
-      // Handle 401 Unauthorized
-      if (error.response.status === 401) {
-        if (!window.location.pathname.includes('/login')) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
-        }
-      }
-    } else {
-      message.error('网络错误，请稍后重试');
-    }
 
     throw error;
   }

@@ -10,11 +10,18 @@
 }
 
 .configPre {
-  background: #f5f5f5;
-  padding: 12px;
-  border-radius: 4px;
-  max-height: 300px;
-  overflow: auto;
+  background: #f6f8fa;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid #e1e4e8;
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: auto;
   margin: 0;
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #24292e;
 } 

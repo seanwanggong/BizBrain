@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Space } from 'antd';
+import { Button, Space, message } from 'antd';
 import { useRouter } from 'next/router';
 import WorkflowDesigner from '@/components/WorkflowDesigner';
 import styles from '@/styles/Workflows.module.css';
 import { Node, Edge } from 'reactflow';
+import * as api from '@/utils/api';
 
 const CreateWorkflowPage: React.FC = () => {
   const router = useRouter();
@@ -18,7 +19,7 @@ const CreateWorkflowPage: React.FC = () => {
     }
   }, [name, description, router]);
 
-  const handleDesignerChange = (newNodes: Node[], newEdges: Edge[]) => {
+  const handleDesignerChange = ({ nodes: newNodes, edges: newEdges }: { nodes: Node[]; edges: Edge[] }) => {
     setNodes(newNodes);
     setEdges(newEdges);
   };
@@ -26,27 +27,48 @@ const CreateWorkflowPage: React.FC = () => {
   const handleSubmit = async () => {
     try {
       const workflowData = {
-        name,
-        description,
+        name: name as string,
+        description: description as string,
         nodes: nodes.map(node => ({
-          id: node.id,
           type: node.data.type,
           name: node.data.label,
           config: node.data.config || {},
-          position: node.position,
         })),
-        edges: edges.map(edge => ({
-          source: edge.source,
-          target: edge.target,
-          type: edge.type,
-        })),
+        config: {
+          nodes: nodes.map(node => ({
+            id: node.id,
+            type: node.data.type,
+            name: node.data.label,
+            config: node.data.config || {},
+            position: node.position,
+          })),
+          edges: edges.map(edge => ({
+            source: edge.source,
+            target: edge.target,
+            type: edge.type,
+          })),
+        }
       };
 
-      // TODO: 调用创建工作流的 API
-      console.log('Creating workflow:', workflowData);
+      await api.createWorkflow(workflowData);
+      message.success('工作流创建成功');
       router.push('/workflows');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create workflow:', error);
+      let errorMessage = '创建工作流失败';
+      
+      if (error.response?.data?.detail) {
+        const detail = error.response.data.detail;
+        if (Array.isArray(detail)) {
+          errorMessage = detail[0]?.msg || errorMessage;
+        } else if (typeof detail === 'object') {
+          errorMessage = detail.msg || errorMessage;
+        } else if (typeof detail === 'string') {
+          errorMessage = detail;
+        }
+      }
+      
+      message.error(errorMessage);
     }
   };
 

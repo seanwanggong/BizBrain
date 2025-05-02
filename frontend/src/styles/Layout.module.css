@@ -2,15 +2,49 @@
   min-height: 100vh;
 }
 
-.brand {
-  margin-right: 40px;
+.header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 
+              0 2px 8px rgba(0, 0, 0, 0.04);
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  height: 64px;
+  transition: box-shadow 0.3s ease, background-color 0.3s ease;
 }
 
-.brand a {
-  color: #1890ff;
-  font-size: 20px;
-  font-weight: 600;
+.header:hover {
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 
+              0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.logo {
+  margin-right: 48px;
+  position: relative;
+}
+
+.logo a {
+  color: #1677ff;
+  font-size: 22px;
+  font-weight: 700;
   text-decoration: none;
+  transition: all 0.3s ease;
+  background: linear-gradient(120deg, #1677ff, #0958d9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+}
+
+.logo a:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(120deg, #1677ff, #36a1ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .menu {
@@ -20,22 +54,88 @@
 }
 
 .menu :global(.ant-menu-item) {
-  padding: 0 20px;
+  padding: 0 24px;
   font-size: 15px;
+  margin: 0 4px;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.menu :global(.ant-menu-item)::after {
+  display: none;
 }
 
 .menu :global(.ant-menu-item a) {
-  color: #595959;
+  color: #4b5563;
+  transition: all 0.3s ease;
+  position: relative;
+  font-weight: 500;
+}
+
+.menu :global(.ant-menu-item-selected) {
+  background: linear-gradient(to bottom, rgba(22, 119, 255, 0.08), rgba(22, 119, 255, 0.12)) !important;
+  backdrop-filter: blur(4px);
 }
 
 .menu :global(.ant-menu-item-selected a) {
-  color: #1890ff;
+  color: #1677ff;
+  font-weight: 600;
+}
+
+.menu :global(.ant-menu-item:hover) {
+  color: #1677ff !important;
+  background: rgba(22, 119, 255, 0.06);
+  transform: translateY(-1px);
+}
+
+.menu :global(.ant-menu-item:hover a) {
+  color: #1677ff !important;
 }
 
 .userSection {
   display: flex;
   align-items: center;
+  gap: 16px;
+}
+
+.authButtons {
+  display: flex;
+  align-items: center;
   gap: 12px;
+}
+
+.authButtons button {
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.authButtons button[type="primary"] {
+  background: linear-gradient(135deg, #1677ff, #0958d9);
+  border: none;
+  border-radius: 8px;
+  height: 34px;
+  padding: 0 20px;
+  box-shadow: 0 2px 4px rgba(5, 145, 255, 0.1),
+              0 4px 8px rgba(5, 145, 255, 0.05);
+}
+
+.authButtons button[type="primary"]:hover {
+  background: linear-gradient(135deg, #1677ff, #36a1ff);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(5, 145, 255, 0.15),
+              0 8px 16px rgba(5, 145, 255, 0.1);
+}
+
+.authButtons button[type="link"] {
+  color: #4b5563;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 6px;
+}
+
+.authButtons button[type="link"]:hover {
+  color: #1677ff;
+  background: rgba(22, 119, 255, 0.06);
 }
 
 .userInfo {

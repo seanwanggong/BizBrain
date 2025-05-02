@@ -4,12 +4,13 @@ import { PlusOutlined, SyncOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import * as api from '@/utils/api';
+import { Agent } from '@/types/agent';
 import styles from './index.module.css';
 
 const AgentsPage = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [agents, setAgents] = useState([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
 
   const fetchAgents = async () => {
     try {
@@ -32,7 +33,7 @@ const AgentsPage = () => {
       title: 'Agent名称',
       dataIndex: 'name',
       key: 'name',
-      render: (text: string, record: any) => (
+      render: (text: string, record: Agent) => (
         <a onClick={() => router.push(`/agents/${record.id}`)}>{text}</a>
       ),
     },
@@ -44,22 +45,22 @@ const AgentsPage = () => {
     },
     {
       title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => {
-        const color = status === 'active' ? 'success' : 'default';
-        return <Tag color={color}>{status === 'active' ? '运行中' : '已停止'}</Tag>;
+      dataIndex: 'is_active',
+      key: 'is_active',
+      render: (is_active: boolean) => {
+        const color = is_active ? 'success' : 'default';
+        return <Tag color={color}>{is_active ? '运行中' : '已停止'}</Tag>;
       },
     },
     {
-      title: '最近执行',
-      dataIndex: 'last_execution',
-      key: 'last_execution',
+      title: '创建时间',
+      dataIndex: 'created_at',
+      key: 'created_at',
     },
     {
       title: '操作',
       key: 'action',
-      render: (_, record: any) => (
+      render: (_: unknown, record: Agent) => (
         <Space size="middle">
           <a onClick={() => router.push(`/agents/${record.id}`)}>查看</a>
           <a onClick={() => router.push(`/agents/${record.id}/edit`)}>编辑</a>

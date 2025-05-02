@@ -30,7 +30,20 @@ export interface Workflow {
   id: string;
   name: string;
   description: string;
-  nodes: WorkflowNode[];
+  config?: {  // 添加 ? 使字段可选
+    nodes: Array<{
+      id: string;
+      type: string;
+      name: string;
+      config: Record<string, any>;
+      position: { x: number; y: number };
+    }>;
+    edges: Array<{
+      source: string;
+      target: string;
+      type?: string;
+    }>;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -38,7 +51,25 @@ export interface Workflow {
 export interface WorkflowFormData {
   name: string;
   description: string;
-  nodes: WorkflowNode[];
+  nodes: Array<{
+    type: NodeType;
+    name: string;
+    config: Record<string, any>;
+  }>;
+  config?: {
+    nodes: Array<{
+      id: string;
+      type: string;
+      name: string;
+      config: Record<string, any>;
+      position: { x: number; y: number };
+    }>;
+    edges: Array<{
+      source: string;
+      target: string;
+      type?: string;
+    }>;
+  };
 }
 
 export interface WorkflowExecution {
@@ -62,4 +93,36 @@ export interface WorkflowExecutionStep {
   error?: string;
   created_at: string;
   updated_at: string;
+}
+
+export enum TaskType {
+  LLM = 'llm',
+  API = 'api',
+  CONDITION = 'condition',
+  LOOP = 'loop',
+  PARALLEL = 'parallel',
+}
+
+export enum TaskStatus {
+  PENDING = 'pending',
+  RUNNING = 'running',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+}
+
+export interface Task {
+  id: string;
+  name: string;
+  description?: string;
+  type: TaskType;
+  config: Record<string, any>;
+  order: number;
+  status: TaskStatus;
+  result?: Record<string, any>;
+  error_message?: string;
+  started_at?: string;
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+  workflow_id: string;
 } 

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Typography, Input, Button, Card, message, Space } from 'antd';
+import { Layout, Typography, Input, Button, Card, message, Space, Tag } from 'antd';
 import { useRouter } from 'next/router';
 import { getAgent, executeAgent } from '@/utils/api';
 import { Agent, AgentExecution } from '@/types/agent';
+import { PlayCircleOutlined, LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import styles from './execute.module.css';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -25,10 +27,10 @@ const ExecuteAgentPage: React.FC = () => {
 
   const fetchAgent = async () => {
     try {
-      const data = await getAgent(Number(id));
+      const data = await getAgent(id as string);
       setAgent(data);
     } catch (error) {
-      message.error('Failed to fetch agent');
+      message.error('获取Agent信息失败');
     } finally {
       setLoading(false);
     }
@@ -36,73 +38,151 @@ const ExecuteAgentPage: React.FC = () => {
 
   const handleExecute = async () => {
     if (!input.trim()) {
-      message.warning('Please enter some input');
+      message.warning('请输入执行内容');
       return;
     }
 
     try {
       setExecuting(true);
-      const result = await executeAgent(Number(id), input);
+      const result = await executeAgent(id as string, input);
       setExecution(result);
-      message.success('Execution completed');
+      message.success('执行完成');
     } catch (error) {
-      message.error('Failed to execute agent');
+      message.error('执行失败');
     } finally {
       setExecuting(false);
     }
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircleOutlined />;
+      case 'running':
+        return <LoadingOutlined />;
+      case 'failed':
+        return <CloseCircleOutlined />;
+      default:
+        return <ClockCircleOutlined />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'success';
+      case 'running':
+        return 'processing';
+      case 'failed':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return '已完成';
+      case 'running':
+        return '执行中';
+      case 'failed':
+        return '失败';
+      default:
+        return '等待中';
+    }
+  };
+
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className={styles.loading}>加载中...</div>;
   }
 
   if (!agent) {
-    return <div>Agent not found</div>;
+    return <div className={styles.notFound}>未找到Agent</div>;
   }
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Content style={{ padding: '24px' }}>
-        <Title level={2}>Execute Agent</Title>
+      <Content className={styles.executePage}>
+        <div className={styles.header}>
+          <Title level={2}>执行Agent</Title>
+          <Text type="secondary">输入指令，让Agent开始工作</Text>
+        </div>
         
-        <Card title="Agent Details" style={{ marginBottom: '24px' }}>
-          <Space direction="vertical">
-            <Text><strong>Name:</strong> {agent.name}</Text>
-            <Text><strong>Type:</strong> {agent.type}</Text>
-            <Text><strong>Description:</strong> {agent.description}</Text>
-          </Space>
-        </Card>
+        <div className={styles.contentLayout}>
+          <div className={styles.leftColumn}>
+            <Card title="Agent信息" className={styles.agentCard}>
+              <div className={styles.cardContent}>
+                <div className={styles.agentInfo}>
+                  <div className={styles.agentInfoItem}>
+                    <span className={styles.agentInfoLabel}>名称：</span>
+                    <Text className={styles.agentInfoValue}>{agent.name}</Text>
+                  </div>
+                  <div className={styles.agentInfoItem}>
+                    <span className={styles.agentInfoLabel}>类型：</span>
+                    <Text className={styles.agentInfoValue}>{agent.agent_type}</Text>
+                  </div>
+                  <div className={styles.agentInfoItem}>
+                    <span className={styles.agentInfoLabel}>描述：</span>
+                    <Text className={styles.agentInfoValue}>{agent.description}</Text>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
 
-        <Card title="Input" style={{ marginBottom: '24px' }}>
-          <TextArea
-            rows={4}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Enter your input here..."
-            style={{ marginBottom: '16px' }}
-          />
-          <Button
-            type="primary"
-            onClick={handleExecute}
-            loading={executing}
-          >
-            Execute
-          </Button>
-        </Card>
+          <div className={styles.rightColumn}>
+            <Card title="执行输入" className={styles.inputCard}>
+              <div className={styles.cardContent}>
+                <div className={styles.executeSection}>
+                  <TextArea
+                    rows={12}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="请输入要执行的内容..."
+                    className={styles.inputArea}
+                  />
+                  <div className={styles.buttonContainer}>
+                    <Button
+                      type="primary"
+                      onClick={handleExecute}
+                      loading={executing}
+                      className={styles.executeButton}
+                      icon={executing ? <LoadingOutlined /> : <PlayCircleOutlined />}
+                    >
+                      {executing ? '执行中...' : '开始执行'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
 
-        {execution && (
-          <Card title="Execution Result">
-            <Space direction="vertical">
-              <Text><strong>Status:</strong> {execution.status}</Text>
-              <Text><strong>Output:</strong></Text>
-              <TextArea
-                value={execution.output}
-                rows={6}
-                readOnly
-              />
-            </Space>
-          </Card>
-        )}
+            {execution && (
+              <Card title="执行结果" className={styles.resultCard}>
+                <div className={styles.cardContent}>
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <div className={styles.agentInfoItem}>
+                      <span className={styles.agentInfoLabel}>状态：</span>
+                      <Tag 
+                        color={getStatusColor(execution.status)} 
+                        className={styles.statusTag}
+                        icon={getStatusIcon(execution.status)}
+                      >
+                        {getStatusText(execution.status)}
+                      </Tag>
+                    </div>
+                    <div className={styles.agentInfoItem}>
+                      <span className={styles.agentInfoLabel}>输出：</span>
+                    </div>
+                    <div className={styles.resultOutput}>
+                      {execution.output}
+                    </div>
+                  </Space>
+                </div>
+              </Card>
+            )}
+          </div>
+        </div>
       </Content>
     </Layout>
   );

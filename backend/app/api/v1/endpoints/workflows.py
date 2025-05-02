@@ -17,58 +17,75 @@ from app.schemas.workflow_task import (
     WorkflowTaskResponse
 )
 from app.services.workflow_engine import WorkflowEngine
-from app.api.deps import get_current_user
+from app.core.auth import get_current_user
+from app.models.user import User
 
 router = APIRouter()
 
 
 @router.post("/", response_model=WorkflowResponse, status_code=status.HTTP_201_CREATED)
-def create_workflow(
+async def create_workflow(
     *,
     db: Session = Depends(get_db),
-    workflow_in: WorkflowCreate
+    workflow_in: WorkflowCreate,
+    current_user: User = Depends(get_current_user)
 ) -> Any:
     """
     Create new workflow.
     """
-    workflow = Workflow()
-    workflow.name = workflow_in.name
-    workflow.description = workflow_in.description
-    if isinstance(workflow_in.config, dict):
-        workflow.config = dict(workflow_in.config)
-    else:
-        workflow.config = {"nodes": [], "edges": []}
-    workflow.user_id = current_user.id
-    
-    db.add(workflow)
-    db.commit()
-    db.refresh(workflow)
-    return workflow
+    try:
+        print(f"Current user: {current_user}")
+        print(f"Current user id: {current_user.id if current_user else None}")
+        print(f"Workflow data: {workflow_in.model_dump()}")
+        workflow = Workflow()
+        workflow.name = workflow_in.name
+        workflow.description = workflow_in.description
+        if isinstance(workflow_in.config, dict):
+            workflow.config = dict(workflow_in.config)
+        else:
+            workflow.config = {"nodes": [], "edges": []}
+        workflow.user_id = current_user.id
+        
+        db.add(workflow)
+        db.commit()
+        db.refresh(workflow)
+        return workflow
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 @router.get("/", response_model=List[WorkflowResponse])
-def list_workflows(
+async def list_workflows(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
     """
     Retrieve workflows.
     """
-    workflows = db.query(Workflow).offset(skip).limit(limit).all()
+    workflows = db.query(Workflow).filter(Workflow.user_id == current_user.id).offset(skip).limit(limit).all()
     return workflows
 
 
 @router.get("/{workflow_id}", response_model=WorkflowResponse)
-def get_workflow(
+async def get_workflow(
     *,
     db: Session = Depends(get_db),
-    workflow_id: int,
+    workflow_id: UUID,
+    current_user: User = Depends(get_current_user),
 ) -> Any:
     """
     Get workflow by ID.
     """
-    workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
+    workflow = db.query(Workflow).filter(
+        Workflow.id == workflow_id,
+        Workflow.user_id == current_user.id
+    ).first()
     if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -78,16 +95,20 @@ def get_workflow(
 
 
 @router.put("/{workflow_id}", response_model=WorkflowResponse)
-def update_workflow(
+async def update_workflow(
     *,
     db: Session = Depends(get_db),
-    workflow_id: int,
+    workflow_id: UUID,
     workflow_in: WorkflowUpdate,
+    current_user: User = Depends(get_current_user),
 ) -> Any:
     """
     Update workflow.
     """
-    workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
+    workflow = db.query(Workflow).filter(
+        Workflow.id == workflow_id,
+        Workflow.user_id == current_user.id
+    ).first()
     if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -102,15 +123,19 @@ def update_workflow(
 
 
 @router.delete("/{workflow_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_workflow(
+async def delete_workflow(
     *,
     db: Session = Depends(get_db),
-    workflow_id: int,
+    workflow_id: UUID,
+    current_user: User = Depends(get_current_user),
 ):
     """
     Delete workflow.
     """
-    workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
+    workflow = db.query(Workflow).filter(
+        Workflow.id == workflow_id,
+        Workflow.user_id == current_user.id
+    ).first()
     if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -122,12 +147,16 @@ def delete_workflow(
 
 @router.post("/{workflow_id}/tasks", response_model=WorkflowTaskResponse)
 async def create_workflow_task(
-    workflow_id: int,
+    workflow_id: UUID,
     task: WorkflowTaskCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    """创建工作流任务"""
-    workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
+    """Create workflow task."""
+    workflow = db.query(Workflow).filter(
+        Workflow.id == workflow_id,
+        Workflow.user_id == current_user.id
+    ).first()
     if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -148,7 +177,7 @@ async def create_workflow_task(
 
 
 @router.get("/{workflow_id}/tasks", response_model=List[WorkflowTaskResponse])
-async def list_workflow_tasks(
+def list_workflow_tasks(
     workflow_id: int,
     db: Session = Depends(get_db)
 ):
@@ -164,11 +193,15 @@ async def list_workflow_tasks(
 
 @router.post("/{workflow_id}/execute", response_model=WorkflowExecutionResponse)
 async def execute_workflow(
-    workflow_id: int,
-    db: Session = Depends(get_db)
+    workflow_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    """执行工作流"""
-    workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
+    """Execute workflow."""
+    workflow = db.query(Workflow).filter(
+        Workflow.id == workflow_id,
+        Workflow.user_id == current_user.id
+    ).first()
     if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -176,5 +209,11 @@ async def execute_workflow(
         )
     
     engine = WorkflowEngine(db)
-    execution = await engine.execute_workflow(workflow)
-    return execution
+    try:
+        execution = await engine.execute_workflow(workflow_id, current_user.id)
+        return execution
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )

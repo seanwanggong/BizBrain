@@ -1,7 +1,7 @@
 """add workflow_execution_id to execution_logs
 
 Revision ID: add_workflow_execution_id
-Revises: 
+Revises: 39427d828889
 Create Date: 2024-03-19 10:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'add_workflow_execution_id'
-down_revision = None
+down_revision = '39427d828889'
 branch_labels = None
 depends_on = None
 

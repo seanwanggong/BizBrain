@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Layout as AntLayout, Menu, Button, Avatar, Dropdown, message } from 'antd';
 import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import Link from 'next/link';
@@ -18,24 +18,29 @@ export default function Layout({ children }: LayoutProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { isAuthenticated, user } = useAppSelector((state) => state.user);
+  const [mounted, setMounted] = useState(false);
 
-  const handleMenuClick = ({ key }: { key: string }) => {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleMenuClick = async ({ key }: { key: string }) => {
     if (!isAuthenticated && ['dashboard', 'agents', 'workflows', 'knowledge'].includes(key)) {
       message.warning('请先登录');
-      router.push('/login');
+      await router.push('/login');
       return;
     }
 
     if (key === 'home') {
-      router.push('/');
+      await router.push('/');
     } else {
-      router.push(`/${key}`);
+      await router.push(`/${key}`);
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     dispatch(logout());
-    router.push('/login');
+    await router.push('/login');
   };
 
   const userMenuItems = [
@@ -53,6 +58,10 @@ export default function Layout({ children }: LayoutProps) {
   ];
 
   const getMenuItems = () => {
+    if (!mounted) {
+      return []; // 在客户端渲染之前返回空数组
+    }
+
     if (isAuthenticated) {
       return [
         {
@@ -68,8 +77,12 @@ export default function Layout({ children }: LayoutProps) {
           label: '工作流',
         },
         {
-          key: 'knowledge',
-          label: '知识库',
+          key: 'tasks',
+          label: '任务',
+        },
+        {
+          key: 'executions',
+          label: '执行',
         }
       ];
     }
@@ -87,63 +100,45 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <>
-      <Head>
-        <style>{`
-          .ant-layout-header {
-            background: #fff !important;
-            height: 64px;
-            padding: 0 50px;
-            line-height: 64px;
-          }
-        `}</style>
-      </Head>
-      <AntLayout className={styles.layout}>
-        <Header className={styles.header}>
-          <div className={styles.brand}>
-            <Link href="/">
-              BizBrain
-            </Link>
+    <AntLayout className={styles.layout}>
+      <Header className={styles.header}>
+        <div className={styles.logo}>
+          <Link href="/" onClick={(e) => {
+            e.preventDefault();
+            router.push('/');
+          }}>BizBrain</Link>
+        </div>
+        <Menu
+          mode="horizontal"
+          selectedKeys={[router.pathname.split('/')[1] || 'home']}
+          items={getMenuItems()}
+          onClick={handleMenuClick}
+          className={styles.menu}
+        />
+        {mounted && isAuthenticated && (
+          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+            <Avatar icon={<UserOutlined />} />
+          </Dropdown>
+        )}
+        {mounted && !isAuthenticated && (
+          <div className={styles.authButtons}>
+            <Button type="link" onClick={async () => {
+              await router.push('/login');
+            }}>登录</Button>
+            <Button type="primary" onClick={async () => {
+              await router.push('/register');
+            }}>注册</Button>
           </div>
-          <Menu
-            mode="horizontal"
-            selectedKeys={[router.pathname === '/' ? 'home' : router.pathname.split('/')[1]]}
-            className={styles.menu}
-            items={getMenuItems()}
-            onClick={handleMenuClick}
-          />
-          <div className={styles.userSection}>
-            {isAuthenticated ? (
-              <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-                <div className={styles.userInfo}>
-                  <Avatar icon={<UserOutlined />} />
-                  <span>{user?.username}</span>
-                </div>
-              </Dropdown>
-            ) : (
-              <>
-                <Link href="/login">
-                  <Button type="link" className={styles.loginButton}>
-                    登录
-                  </Button>
-                </Link>
-                <Link href="/register">
-                  <Button type="primary" className={styles.registerButton}>
-                    注册
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        </Header>
-        <Content className={styles.content}>
-          <div className={styles.contentInner}>{children}</div>
-        </Content>
-        <Footer className={styles.footer}>
-          BizBrain ©{new Date().getFullYear()} Created with{' '}
-          <span className={styles.footerHeart}>❤</span>
-        </Footer>
-      </AntLayout>
-    </>
+        )}
+      </Header>
+      <div className={styles.content}>
+        <div className={styles.contentInner}>
+          {children}
+        </div>
+      </div>
+      <Footer className={styles.footer}>
+        BizBrain ©{new Date().getFullYear()} Created by Your Team
+      </Footer>
+    </AntLayout>
   );
 } 

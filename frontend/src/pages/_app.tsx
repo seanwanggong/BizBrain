@@ -34,8 +34,8 @@ export default function App({ Component, pageProps }: AppProps) {
         locale={zhCN}
       >
         <Head>
-          <title>BizBrain</title>
-          <meta name="description" content="BizBrain - 智能商业助手" />
+          <title>【BizBrain】AI Agent协作平台 - 智能协同解决方案，企业降本增效新引擎</title>
+          <meta name="description" content="BizBrain为企业提供智能化AI Agent协同管理平台，通过AI智能体深度协作优化工作流程，降低30%运营成本，提升跨部门协作效率，实现业务流程自动化与决策智能化升级。" />
           <link rel="icon" href="/favicon.ico" />
           <style>{`
             .ant-layout-header {
@@ -57,11 +57,13 @@ export default function App({ Component, pageProps }: AppProps) {
             }
           `}</style>
         </Head>
-        <Layout>
-          <AuthGuard>
-            <Component {...pageProps} />
-          </AuthGuard>
-        </Layout>
+        <div id="app-root">
+          <Layout>
+            <AuthGuard>
+              <Component {...pageProps} />
+            </AuthGuard>
+          </Layout>
+        </div>
       </ConfigProvider>
     </Provider>
   )

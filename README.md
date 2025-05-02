@@ -143,6 +143,8 @@ npm run dev
 ```bash
 docker-compose up -d
 docker-compose down && docker-compose up -d
+
+docker-compose -f docker-compose.dev.yml down && docker-compose -f docker-compose.dev.yml build --no-cache && docker-compose -f docker-compose.dev.yml up -d
 ```
 
 访问：
