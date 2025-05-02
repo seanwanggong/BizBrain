@@ -1,0 +1,187 @@
+.executePage {
+  padding: 32px;
+  max-width: 1600px;
+  margin: 0 auto;
+  background: #fafafa;
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.header h2 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+
+.contentLayout {
+  display: flex;
+  gap: 32px;
+}
+
+.leftColumn {
+  flex: 0 0 400px;
+}
+
+.rightColumn {
+  flex: 1;
+  min-width: 0;
+}
+
+.agentCard {
+  margin-bottom: 32px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: none;
+  height: 100%;
+}
+
+.agentCard :global(.ant-card-head) {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 24px;
+}
+
+.agentCard :global(.ant-card-head-title) {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.inputCard {
+  margin-bottom: 32px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: none;
+}
+
+.inputCard :global(.ant-card-head) {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 24px;
+}
+
+.inputCard :global(.ant-card-head-title) {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.inputArea {
+  margin-bottom: 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  line-height: 1.6;
+  min-height: 200px;
+}
+
+.inputArea :global(.ant-input) {
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.executeButton {
+  width: 160px;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.resultCard {
+  margin-bottom: 32px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: none;
+}
+
+.resultCard :global(.ant-card-head) {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 24px;
+}
+
+.resultCard :global(.ant-card-head-title) {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.resultOutput {
+  background: #ffffff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 20px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  min-height: 200px;
+}
+
+.statusTag {
+  margin-left: 8px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.agentInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.agentInfoItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.agentInfoLabel {
+  font-weight: 500;
+  color: #666;
+  min-width: 100px;
+  font-size: 15px;
+}
+
+.agentInfoValue {
+  color: #1a1a1a;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.cardContent {
+  padding: 24px;
+}
+
+.executeSection {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 1200px) {
+  .contentLayout {
+    flex-direction: column;
+  }
+  
+  .leftColumn {
+    flex: none;
+    width: 100%;
+  }
+} 

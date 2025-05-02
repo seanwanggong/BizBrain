@@ -1,7 +1,7 @@
 """create execution logs table
 
 Revision ID: create_execution_logs
-Revises: create_agents_table
+Revises: e1549478a4ab
 Create Date: 2024-03-19 10:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'create_execution_logs'
-down_revision = 'create_agents_table'
+down_revision = 'e1549478a4ab'
 branch_labels = None
 depends_on = None
 

@@ -1,4 +1,5 @@
-from typing import Optional, Dict, Any, List, UUID
+from typing import Optional, Dict, Any, List
+from uuid import UUID
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 
@@ -9,11 +10,11 @@ class AgentBase(BaseModel):
     config: Dict[str, Any] = Field(default_factory=dict, description="Agent配置")
 
 class AgentConfig(BaseModel):
-    model: str
-    systemPrompt: str
-    temperature: float
-    maxTokens: int
-    tools: List[str]
+    model: Optional[str] = None
+    systemPrompt: Optional[str] = None
+    temperature: Optional[float] = None
+    maxTokens: Optional[int] = None
+    tools: Optional[List[str]] = None
 
 class AgentCreate(BaseModel):
     name: str
@@ -40,12 +41,13 @@ class AgentResponse(BaseModel):
     updated_at: datetime
     creator_id: UUID
 
-    class Config:
-        from_attributes = True
-        json_encoders = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={
             datetime: lambda v: v.isoformat(),
             UUID: lambda v: str(v)
         }
+    )
 
 class AgentInDB(AgentCreate):
     id: int

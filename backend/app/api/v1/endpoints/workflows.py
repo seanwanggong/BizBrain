@@ -1,4 +1,5 @@
 from typing import Any, List, Optional
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -16,6 +17,7 @@ from app.schemas.workflow_task import (
     WorkflowTaskResponse
 )
 from app.services.workflow_engine import WorkflowEngine
+from app.api.deps import get_current_user
 
 router = APIRouter()
 
@@ -24,12 +26,20 @@ router = APIRouter()
 def create_workflow(
     *,
     db: Session = Depends(get_db),
-    workflow_in: WorkflowCreate,
+    workflow_in: WorkflowCreate
 ) -> Any:
     """
     Create new workflow.
     """
-    workflow = Workflow(**workflow_in.model_dump())
+    workflow = Workflow()
+    workflow.name = workflow_in.name
+    workflow.description = workflow_in.description
+    if isinstance(workflow_in.config, dict):
+        workflow.config = dict(workflow_in.config)
+    else:
+        workflow.config = {"nodes": [], "edges": []}
+    workflow.user_id = current_user.id
+    
     db.add(workflow)
     db.commit()
     db.refresh(workflow)

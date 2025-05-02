@@ -1,9 +1,10 @@
-from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.session import get_async_session
+from typing import Optional
+from fastapi import Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from app.core.database import get_db
+from app.models.user import User
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """获取异步数据库会话"""
-    async for session in get_async_session():
-        yield session
+def get_current_user() -> Optional[User]:
+    """获取当前用户（临时实现，总是返回 None）"""
+    return None

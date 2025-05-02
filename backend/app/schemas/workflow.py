@@ -1,6 +1,7 @@
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel
 from datetime import datetime
+from uuid import UUID
 from .workflow_task import WorkflowTaskResponse
 
 
@@ -8,7 +9,7 @@ class WorkflowBase(BaseModel):
     """工作流基础模型"""
     name: str
     description: Optional[str] = None
-    config: Dict[str, Any]
+    config: Optional[Dict[str, Any]] = None
 
 
 class WorkflowCreate(WorkflowBase):
@@ -25,10 +26,12 @@ class WorkflowUpdate(WorkflowBase):
 
 class WorkflowResponse(WorkflowBase):
     """工作流响应模型"""
-    id: int
-    tasks: List[WorkflowTaskResponse]
+    id: UUID
+    user_id: UUID
+    tasks: List[WorkflowTaskResponse] = []
     created_at: datetime
     updated_at: Optional[datetime] = None
+    is_active: bool = True
 
     class Config:
         from_attributes = True
@@ -36,7 +39,7 @@ class WorkflowResponse(WorkflowBase):
 
 class WorkflowExecutionResponse(BaseModel):
     """工作流执行响应模型"""
-    workflow_id: int
+    workflow_id: UUID
     task_results: List[Dict[str, Any]]
     started_at: datetime
     completed_at: Optional[datetime] = None

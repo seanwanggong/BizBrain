@@ -1,5 +1,13 @@
 FROM python:3.11-slim
 
+# 先删除可能存在的其他源文件
+RUN rm -rf /etc/apt/sources.list.d/*
+
+# 创建并写入中科大源配置
+RUN echo "deb http://mirrors.ustc.edu.cn/debian bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/ustc.list && \
+    echo "deb http://mirrors.ustc.edu.cn/debian bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list.d/ustc.list && \
+    echo "deb http://mirrors.ustc.edu.cn/debian-security bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list.d/ustc.list
+
 WORKDIR /app
 
 # Install system dependencies
