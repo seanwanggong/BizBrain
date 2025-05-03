@@ -1,43 +1,51 @@
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
 from sqlalchemy.dialects import postgresql
 from ..core.config import settings
-from ..db.base_class import Base, init_models
+import logging
 
-# Create PostgreSQL URL
-database_url = URL.create(
-    drivername="postgresql+psycopg2",
-    username=settings.POSTGRES_USER,
-    password=settings.POSTGRES_PASSWORD,
-    host=settings.POSTGRES_SERVER,
-    port=settings.POSTGRES_PORT,
-    database=settings.POSTGRES_DB
-)
+logger = logging.getLogger(__name__)
 
-# 创建引擎
-engine = create_engine(
-    database_url,
-    echo=settings.DEBUG,
+# # Create PostgreSQL URL
+# database_url = URL.create(
+#     drivername="postgresql+psycopg2",
+#     username=settings.POSTGRES_USER,
+#     password=settings.POSTGRES_PASSWORD,
+#     host=settings.POSTGRES_SERVER,
+#     port=settings.POSTGRES_PORT,
+#     database=settings.POSTGRES_DB
+# )
+
+# 创建异步引擎
+engine = create_async_engine(
+    settings.SQLALCHEMY_DATABASE_URI,
+    echo=settings.DB_ECHO,
     pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10,
-    future=True,
-    connect_args={
-        "options": "-c timezone=utc"
-    }
+    pool_size=20,  # 增加连接池大小
+    max_overflow=30,  # 增加最大溢出连接数
+    pool_timeout=30,  # 设置连接池超时时间
+    pool_recycle=1800,  # 30分钟后回收连接
+    future=True
 )
 
-# 创建会话工厂
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# 初始化所有模型
-init_models()
+# 创建异步会话工厂
+AsyncSessionLocal = sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False
+)
 
 # 获取数据库会话的依赖函数
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close() 
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        except Exception as e:
+            logger.error(f"Database session error: {str(e)}")
+            await session.rollback()
+            raise
+        finally:
+            await session.close() 

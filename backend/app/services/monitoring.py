@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
-from sqlalchemy import func, desc
-from sqlalchemy.orm import Session
+from sqlalchemy import func, desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.task_log import TaskLog
 from app.models.workflow_task import WorkflowTask, TaskStatus, TaskType
@@ -17,28 +17,29 @@ from app.schemas.monitoring import (
 from app.schemas.workflow_execution import WorkflowExecutionCreate, WorkflowExecutionUpdate
 
 class MonitoringService:
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
 
-    def get_task_execution_stats(
+    async def get_task_execution_stats(
         self,
         task_id: Optional[int] = None,
         execution_id: Optional[int] = None,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None
     ) -> TaskExecutionStats:
-        query = self.db.query(WorkflowTask)
+        query = select(WorkflowTask)
         
         if task_id:
-            query = query.filter(WorkflowTask.id == task_id)
+            query = query.where(WorkflowTask.id == task_id)
         if execution_id:
-            query = query.filter(WorkflowTask.execution_id == execution_id)
+            query = query.where(WorkflowTask.execution_id == execution_id)
         if start_time:
-            query = query.filter(WorkflowTask.created_at >= start_time)
+            query = query.where(WorkflowTask.created_at >= start_time)
         if end_time:
-            query = query.filter(WorkflowTask.created_at <= end_time)
+            query = query.where(WorkflowTask.created_at <= end_time)
 
-        tasks = query.all()
+        result = await self.db.execute(query)
+        tasks = result.scalars().all()
         
         total_tasks = len(tasks)
         completed_tasks = sum(1 for t in tasks if t.status == TaskStatus.COMPLETED)
@@ -83,19 +84,20 @@ class MonitoringService:
             by_type=list(task_type_stats.values())
         )
 
-    def get_workflow_execution_stats(
+    async def get_workflow_execution_stats(
         self,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None
     ) -> WorkflowExecutionStats:
-        query = self.db.query(WorkflowExecution)
+        query = select(WorkflowExecution)
         
         if start_time:
-            query = query.filter(WorkflowExecution.created_at >= start_time)
+            query = query.where(WorkflowExecution.created_at >= start_time)
         if end_time:
-            query = query.filter(WorkflowExecution.created_at <= end_time)
+            query = query.where(WorkflowExecution.created_at <= end_time)
 
-        executions = query.all()
+        result = await self.db.execute(query)
+        executions = result.scalars().all()
         
         total_executions = len(executions)
         completed_executions = sum(1 for e in executions if e.status == ExecutionStatus.COMPLETED)
@@ -120,7 +122,7 @@ class MonitoringService:
             average_duration=average_duration
         )
 
-    def get_system_stats(self) -> SystemStats:
+    async def get_system_stats(self) -> SystemStats:
         # 这里应该使用实际的系统监控工具来获取这些指标
         # 这里只是返回示例数据
         return SystemStats(
@@ -130,10 +132,10 @@ class MonitoringService:
             uptime=3600.0  # 1小时
         )
 
-    def get_monitoring_stats(self) -> MonitoringStats:
-        task_stats = self.get_task_execution_stats()
-        workflow_stats = self.get_workflow_execution_stats()
-        system_stats = self.get_system_stats()
+    async def get_monitoring_stats(self) -> MonitoringStats:
+        task_stats = await self.get_task_execution_stats()
+        workflow_stats = await self.get_workflow_execution_stats()
+        system_stats = await self.get_system_stats()
 
         return MonitoringStats(
             task_stats=task_stats,

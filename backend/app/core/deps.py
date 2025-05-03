@@ -1,10 +1,11 @@
-from typing import Generator
+from typing import AsyncGenerator
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.core.config import settings
-from app.core.database import SessionLocal
+from app.core.database import AsyncSessionLocal
 from app.models.user import User
 import logging
 
@@ -15,17 +16,17 @@ oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/auth/login"
 )
 
-def get_db() -> Generator:
-    try:
-        db = SessionLocal()
-        yield db
-    finally:
-        db.close()
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
 
 async def get_current_user(
     request: Request,
     token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -42,7 +43,10 @@ async def get_current_user(
             payload = jwt.decode(
                 token, 
                 settings.SECRET_KEY, 
-                algorithms=[settings.ALGORITHM]
+                algorithms=[settings.JWT_ALGORITHM],
+                issuer=settings.JWT_ISSUER,
+                audience=settings.JWT_AUDIENCE,
+                leeway=settings.JWT_LEEWAY
             )
             logger.debug(f"Token payload: {payload}")
         except jwt.ExpiredSignatureError:
@@ -63,7 +67,10 @@ async def get_current_user(
             
         # 查询用户
         try:
-            user = db.query(User).filter(User.email == email).first()
+            stmt = select(User).where(User.email == email)
+            result = await db.execute(stmt)
+            user = result.scalar_one_or_none()
+            
             if user is None:
                 logger.error(f"No user found with email: {email}")
                 raise HTTPException(
@@ -97,7 +104,7 @@ async def get_current_user(
             detail="Internal server error"
         )
 
-def get_current_active_user(
+async def get_current_active_user(
     current_user: User = Depends(get_current_user)
 ) -> User:
     if not current_user.is_active:
@@ -107,7 +114,7 @@ def get_current_active_user(
         )
     return current_user
 
-def get_current_active_superuser(
+async def get_current_active_superuser(
     current_user: User = Depends(get_current_user)
 ) -> User:
     if not current_user.is_superuser:

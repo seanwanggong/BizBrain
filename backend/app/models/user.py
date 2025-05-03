@@ -1,10 +1,13 @@
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 from sqlalchemy import Boolean, Column, String, DateTime, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.db.base_class import Base
+from app.core.security import get_password_hash
 import uuid
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -54,4 +57,29 @@ class User(Base):
             return result
         except Exception as e:
             logger.error(f"Error in to_dict: {str(e)}", exc_info=True)
+            raise
+
+    def __init__(self, **kwargs):
+        """Initialize user with password hashing"""
+        try:
+            logger.debug(f"Initializing user with kwargs: {kwargs}")
+            
+            # 如果提供了密码，则进行哈希处理
+            if 'password' in kwargs:
+                password = kwargs.pop('password')
+                kwargs['hashed_password'] = get_password_hash(password)
+                logger.debug("Password hashed successfully")
+            
+            # 确保 created_at 和 updated_at 有初始值
+            if 'created_at' not in kwargs:
+                kwargs['created_at'] = datetime.utcnow()
+            if 'updated_at' not in kwargs:
+                kwargs['updated_at'] = datetime.utcnow()
+            
+            logger.debug(f"Final kwargs before super(): {kwargs}")
+            super().__init__(**kwargs)
+            logger.debug("User initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"Error initializing user: {str(e)}", exc_info=True)
             raise 

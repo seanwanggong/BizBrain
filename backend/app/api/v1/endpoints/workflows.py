@@ -1,7 +1,10 @@
 from typing import Any, List, Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from app.core.database import get_db
 from app.models.workflow import Workflow
 from app.models.workflow_task import WorkflowTask, TaskType, TaskStatus
@@ -19,6 +22,7 @@ from app.schemas.workflow_task import (
 from app.services.workflow_engine import WorkflowEngine
 from app.core.auth import get_current_user
 from app.models.user import User
+from app.core.deps import get_current_user
 
 router = APIRouter()
 
@@ -26,7 +30,7 @@ router = APIRouter()
 @router.post("/", response_model=WorkflowResponse, status_code=status.HTTP_201_CREATED)
 async def create_workflow(
     *,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     workflow_in: WorkflowCreate,
     current_user: User = Depends(get_current_user)
 ) -> Any:
@@ -37,21 +41,14 @@ async def create_workflow(
         print(f"Current user: {current_user}")
         print(f"Current user id: {current_user.id if current_user else None}")
         print(f"Workflow data: {workflow_in.model_dump()}")
-        workflow = Workflow()
-        workflow.name = workflow_in.name
-        workflow.description = workflow_in.description
-        if isinstance(workflow_in.config, dict):
-            workflow.config = dict(workflow_in.config)
-        else:
-            workflow.config = {"nodes": [], "edges": []}
-        workflow.user_id = current_user.id
-        
-        db.add(workflow)
-        db.commit()
-        db.refresh(workflow)
-        return workflow
+        workflow_data = workflow_in.model_dump()
+        db_workflow = Workflow(**workflow_data, user_id=current_user.id)
+        db.add(db_workflow)
+        await db.commit()
+        await db.refresh(db_workflow)
+        return db_workflow
     except Exception as e:
-        db.rollback()
+        await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
@@ -60,129 +57,132 @@ async def create_workflow(
 
 @router.get("/", response_model=List[WorkflowResponse])
 async def list_workflows(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-    skip: int = 0,
-    limit: int = 100,
-) -> Any:
-    """
-    Retrieve workflows.
-    """
-    workflows = db.query(Workflow).filter(Workflow.user_id == current_user.id).offset(skip).limit(limit).all()
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """获取工作流列表"""
+    stmt = (
+        select(Workflow)
+        .where(Workflow.user_id == current_user.id)
+        .options(selectinload(Workflow.tasks), selectinload(Workflow.executions))
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    workflows = result.scalars().all()
     return workflows
 
 
 @router.get("/{workflow_id}", response_model=WorkflowResponse)
 async def get_workflow(
-    *,
-    db: Session = Depends(get_db),
     workflow_id: UUID,
-    current_user: User = Depends(get_current_user),
-) -> Any:
-    """
-    Get workflow by ID.
-    """
-    workflow = db.query(Workflow).filter(
-        Workflow.id == workflow_id,
-        Workflow.user_id == current_user.id
-    ).first()
-    if not workflow:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Workflow not found",
-        )
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """获取工作流详情"""
+    stmt = (
+        select(Workflow)
+        .where(Workflow.id == workflow_id, Workflow.user_id == current_user.id)
+        .options(selectinload(Workflow.tasks), selectinload(Workflow.executions))
+    )
+    result = await db.execute(stmt)
+    workflow = result.scalar_one_or_none()
+    if workflow is None:
+        raise HTTPException(status_code=404, detail="工作流不存在")
     return workflow
 
 
 @router.put("/{workflow_id}", response_model=WorkflowResponse)
 async def update_workflow(
-    *,
-    db: Session = Depends(get_db),
     workflow_id: UUID,
-    workflow_in: WorkflowUpdate,
-    current_user: User = Depends(get_current_user),
-) -> Any:
-    """
-    Update workflow.
-    """
-    workflow = db.query(Workflow).filter(
-        Workflow.id == workflow_id,
-        Workflow.user_id == current_user.id
-    ).first()
-    if not workflow:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Workflow not found",
-        )
-    for field, value in workflow_in.model_dump(exclude_unset=True).items():
-        setattr(workflow, field, value)
-    db.add(workflow)
-    db.commit()
-    db.refresh(workflow)
-    return workflow
+    workflow: WorkflowUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """更新工作流"""
+    stmt = (
+        select(Workflow)
+        .where(Workflow.id == workflow_id, Workflow.user_id == current_user.id)
+        .options(selectinload(Workflow.tasks), selectinload(Workflow.executions))
+    )
+    result = await db.execute(stmt)
+    db_workflow = result.scalar_one_or_none()
+    if db_workflow is None:
+        raise HTTPException(status_code=404, detail="工作流不存在")
+    
+    update_data = workflow.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_workflow, field, value)
+    
+    await db.commit()
+    await db.refresh(db_workflow)
+    return db_workflow
 
 
 @router.delete("/{workflow_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_workflow(
-    *,
-    db: Session = Depends(get_db),
     workflow_id: UUID,
-    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    """
-    Delete workflow.
-    """
-    workflow = db.query(Workflow).filter(
-        Workflow.id == workflow_id,
-        Workflow.user_id == current_user.id
-    ).first()
-    if not workflow:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Workflow not found",
-        )
-    db.delete(workflow)
-    db.commit()
+    """删除工作流"""
+    stmt = select(Workflow).where(Workflow.id == workflow_id, Workflow.user_id == current_user.id)
+    result = await db.execute(stmt)
+    db_workflow = result.scalar_one_or_none()
+    if db_workflow is None:
+        raise HTTPException(status_code=404, detail="工作流不存在")
+    
+    await db.delete(db_workflow)
+    await db.commit()
+    return {"message": "工作流已删除"}
 
 
 @router.post("/{workflow_id}/tasks", response_model=WorkflowTaskResponse)
 async def create_workflow_task(
     workflow_id: UUID,
     task: WorkflowTaskCreate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Create workflow task."""
-    workflow = db.query(Workflow).filter(
+    stmt = select(Workflow).where(
         Workflow.id == workflow_id,
         Workflow.user_id == current_user.id
-    ).first()
+    )
+    result = await db.execute(stmt)
+    workflow = result.scalar_one_or_none()
     if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Workflow not found"
         )
     
+    task_data = task.model_dump()
     db_task = WorkflowTask(
         workflow_id=workflow_id,
-        name=task.name,
-        description=task.description,
-        task_type=task.task_type,
-        config=task.config
+        **task_data
     )
     db.add(db_task)
-    db.commit()
-    db.refresh(db_task)
+    await db.commit()
+    await db.refresh(db_task)
     return db_task
 
 
 @router.get("/{workflow_id}/tasks", response_model=List[WorkflowTaskResponse])
-def list_workflow_tasks(
-    workflow_id: int,
-    db: Session = Depends(get_db)
+async def list_workflow_tasks(
+    workflow_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """获取工作流任务列表"""
-    workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
+    stmt = select(Workflow).where(
+        Workflow.id == workflow_id,
+        Workflow.user_id == current_user.id
+    )
+    result = await db.execute(stmt)
+    workflow = result.scalar_one_or_none()
     if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -194,14 +194,16 @@ def list_workflow_tasks(
 @router.post("/{workflow_id}/execute", response_model=WorkflowExecutionResponse)
 async def execute_workflow(
     workflow_id: UUID,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Execute workflow."""
-    workflow = db.query(Workflow).filter(
+    stmt = select(Workflow).where(
         Workflow.id == workflow_id,
         Workflow.user_id == current_user.id
-    ).first()
+    )
+    result = await db.execute(stmt)
+    workflow = result.scalar_one_or_none()
     if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

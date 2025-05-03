@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Dict
 
-from app.api import deps
+from app.core.deps import get_db
 from app.models.workflow_task import WorkflowTask, TaskStatus, TaskType
 from app.models.agent import Agent
 
@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.get("/stats", response_model=Dict[str, int])
 async def get_dashboard_stats(
-    db: AsyncSession = Depends(deps.get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> Dict[str, int]:
     """
     获取仪表盘统计数据

@@ -37,6 +37,7 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["*"]
     )
 
 app.include_router(docs.router, prefix=f"{settings.API_V1_STR}/docs", tags=["documentation"])
@@ -45,7 +46,7 @@ app.include_router(api_router)
 @app.on_event("startup")
 async def startup_event():
     logging.info("Starting up application...")
-    init_db()
+    await init_db()
     logging.info("Application startup complete")
 
 @app.get("/")

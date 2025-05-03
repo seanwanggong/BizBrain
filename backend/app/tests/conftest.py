@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from app.core.database import Base
+from app.db.base_class import Base
 from app.core.config import settings
 import os
 

@@ -1,9 +1,10 @@
+from typing import Any, Dict, List, Optional
+from datetime import datetime
 from sqlalchemy import Column, Integer, String, JSON, Boolean, DateTime, UniqueConstraint, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
-from datetime import datetime
 
 class Agent(Base):
     __tablename__ = "agents"
@@ -14,7 +15,7 @@ class Agent(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     description = Column(String)
-    type = Column(String, nullable=False)
+    agent_type = Column(String, nullable=False)
     config = Column(JSON, nullable=False, default={})
     is_active = Column(Boolean, default=True)
     creator_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
@@ -30,7 +31,7 @@ class Agent(Base):
         print(f"Received kwargs: {kwargs}")
         
         # 确保所有必需的字段都存在
-        required_fields = ['name', 'description', 'type', 'config', 'creator_id']
+        required_fields = ['name', 'description', 'agent_type', 'config', 'creator_id']
         for field in required_fields:
             if field not in kwargs:
                 print(f"Missing required field: {field}")
@@ -49,7 +50,7 @@ class Agent(Base):
             'id': self.id,
             'name': self.name,
             'description': self.description,
-            'type': self.type,
+            'agent_type': self.agent_type,
             'config': self.config,
             'is_active': self.is_active,
             'creator_id': str(self.creator_id) if self.creator_id else None,

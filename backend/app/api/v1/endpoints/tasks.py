@@ -1,24 +1,29 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlalchemy import and_, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from uuid import UUID
 from datetime import datetime
 
 from app.core.database import get_db
-from app.models.workflow_task import WorkflowTask, TaskStatus, TaskType
+from app.models.workflow_task import WorkflowTask, TaskStatus, TaskType, task_dependencies
 from app.schemas.workflow_task import (
     WorkflowTaskCreate,
     WorkflowTaskUpdate,
     WorkflowTaskResponse
 )
+from app.core.deps import get_current_user
+from app.models.user import User
 
 router = APIRouter()
 
 @router.post("/", response_model=WorkflowTaskResponse)
-def create_task(
+async def create_task(
     task: WorkflowTaskCreate,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     创建新的工作流任务
@@ -30,20 +35,22 @@ def create_task(
     - **order**: 任务执行顺序（默认为0）
     - **workflow_id**: 所属工作流ID
     """
-    db_task = WorkflowTask(**task.model_dump())
+    task_data = task.model_dump()
+    db_task = WorkflowTask(**task_data)
     db.add(db_task)
-    db.commit()
-    db.refresh(db_task)
+    await db.commit()
+    await db.refresh(db_task)
     return db_task
 
 @router.get("/", response_model=List[WorkflowTaskResponse])
-def list_tasks(
+async def list_tasks(
     workflow_id: Optional[UUID] = None,
     task_type: Optional[TaskType] = None,
     status: Optional[TaskStatus] = None,
     skip: int = Query(0, ge=0, description="分页起始位置"),
     limit: int = Query(100, ge=1, le=100, description="每页数量"),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     获取工作流任务列表，支持按工作流ID、任务类型和状态筛选
@@ -54,45 +61,97 @@ def list_tasks(
     - **skip**: 分页起始位置
     - **limit**: 每页数量
     """
-    query = db.query(WorkflowTask)
+    stmt = (
+        select(WorkflowTask)
+        .options(selectinload(WorkflowTask.dependencies))
+        .offset(skip)
+        .limit(limit)
+    )
     
     # 应用筛选条件
     if workflow_id:
-        query = query.filter(WorkflowTask.workflow_id == workflow_id)
+        stmt = stmt.filter(WorkflowTask.workflow_id == workflow_id)
     if task_type:
-        query = query.filter(WorkflowTask.type == task_type)
+        stmt = stmt.filter(WorkflowTask.type == task_type)
     if status:
-        query = query.filter(WorkflowTask.status == status)
+        stmt = stmt.filter(WorkflowTask.status == status)
     
-    # 按执行顺序和创建时间排序
-    query = query.order_by(WorkflowTask.order.asc(), WorkflowTask.created_at.desc())
+    result = await db.execute(stmt)
+    tasks = result.scalars().all()
     
-    tasks = query.offset(skip).limit(limit).all()
-    return tasks
+    # 手动构建响应，包括依赖关系
+    response_tasks = []
+    for task in tasks:
+        task_dict = WorkflowTaskResponse(
+            id=task.id,
+            name=task.name,
+            description=task.description,
+            type=task.type,
+            config=task.config,
+            order=task.order,
+            workflow_id=task.workflow_id,
+            status=task.status,
+            result=task.result,
+            error_message=task.error_message,
+            started_at=task.started_at,
+            completed_at=task.completed_at,
+            created_at=task.created_at,
+            updated_at=task.updated_at,
+            dependencies=[dep.id for dep in task.dependencies]
+        )
+        response_tasks.append(task_dict)
+    
+    return response_tasks
 
 @router.get("/{task_id}", response_model=WorkflowTaskResponse)
-def get_task(
+async def get_task(
     task_id: UUID = Path(..., description="任务ID"),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     获取特定工作流任务的详细信息
     
     - **task_id**: 任务ID
     """
-    task = db.query(WorkflowTask).filter(WorkflowTask.id == task_id).first()
+    stmt = (
+        select(WorkflowTask)
+        .options(selectinload(WorkflowTask.dependencies))
+        .where(WorkflowTask.id == task_id)
+    )
+    result = await db.execute(stmt)
+    task = result.scalar_one_or_none()
     if task is None:
         raise HTTPException(
             status_code=404,
             detail=f"Task with ID {task_id} not found"
         )
-    return task
+    
+    # 手动构建响应，包括依赖关系
+    return WorkflowTaskResponse(
+        id=task.id,
+        name=task.name,
+        description=task.description,
+        type=task.type,
+        config=task.config,
+        order=task.order,
+        workflow_id=task.workflow_id,
+        status=task.status,
+        result=task.result,
+        error_message=task.error_message,
+        started_at=task.started_at,
+        completed_at=task.completed_at,
+        created_at=task.created_at,
+        updated_at=task.updated_at,
+        dependencies=[dep.id for dep in task.dependencies]
+    )
 
 @router.put("/{task_id}", response_model=WorkflowTaskResponse)
-def update_task(
+async def update_task(
     task_id: UUID = Path(..., description="任务ID"),
     task_update: WorkflowTaskUpdate = None,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     更新工作流任务
@@ -105,7 +164,13 @@ def update_task(
     - **order**: 任务执行顺序（可选）
     - **status**: 任务状态（可选）
     """
-    db_task = db.query(WorkflowTask).filter(WorkflowTask.id == task_id).first()
+    stmt = (
+        select(WorkflowTask)
+        .options(selectinload(WorkflowTask.dependencies))
+        .where(WorkflowTask.id == task_id)
+    )
+    result = await db.execute(stmt)
+    db_task = result.scalar_one_or_none()
     if db_task is None:
         raise HTTPException(
             status_code=404,
@@ -117,53 +182,59 @@ def update_task(
     for field, value in update_data.items():
         setattr(db_task, field, value)
     
-    try:
-        db.commit()
-        db.refresh(db_task)
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=400,
-            detail=f"Failed to update task: {str(e)}"
-        )
+    await db.commit()
+    await db.refresh(db_task)
     
-    return db_task
+    # 手动构建响应，包括依赖关系
+    return WorkflowTaskResponse(
+        id=db_task.id,
+        name=db_task.name,
+        description=db_task.description,
+        type=db_task.type,
+        config=db_task.config,
+        order=db_task.order,
+        workflow_id=db_task.workflow_id,
+        status=db_task.status,
+        result=db_task.result,
+        error_message=db_task.error_message,
+        started_at=db_task.started_at,
+        completed_at=db_task.completed_at,
+        created_at=db_task.created_at,
+        updated_at=db_task.updated_at,
+        dependencies=[dep.id for dep in db_task.dependencies]
+    )
 
 @router.delete("/{task_id}")
-def delete_task(
+async def delete_task(
     task_id: UUID = Path(..., description="任务ID"),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     删除工作流任务
     
     - **task_id**: 任务ID
     """
-    db_task = db.query(WorkflowTask).filter(WorkflowTask.id == task_id).first()
+    stmt = select(WorkflowTask).where(WorkflowTask.id == task_id)
+    result = await db.execute(stmt)
+    db_task = result.scalar_one_or_none()
     if db_task is None:
         raise HTTPException(
             status_code=404,
             detail=f"Task with ID {task_id} not found"
         )
     
-    try:
-        db.delete(db_task)
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=400,
-            detail=f"Failed to delete task: {str(e)}"
-        )
-    
+    await db.delete(db_task)
+    await db.commit()
     return {"message": f"Task {task_id} deleted successfully"}
 
 @router.put("/{task_id}/status", response_model=WorkflowTaskResponse)
-def update_task_status(
+async def update_task_status(
     task_id: UUID = Path(..., description="任务ID"),
     status: TaskStatus = Query(..., description="新的任务状态"),
     error_message: Optional[str] = Query(None, description="错误信息（当状态为FAILED时）"),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     更新任务状态
@@ -172,7 +243,9 @@ def update_task_status(
     - **status**: 新的任务状态
     - **error_message**: 错误信息（当状态为FAILED时可选）
     """
-    db_task = db.query(WorkflowTask).filter(WorkflowTask.id == task_id).first()
+    stmt = select(WorkflowTask).where(WorkflowTask.id == task_id)
+    result = await db.execute(stmt)
+    db_task = result.scalar_one_or_none()
     if db_task is None:
         raise HTTPException(
             status_code=404,
@@ -189,10 +262,10 @@ def update_task_status(
             db_task.error_message = error_message
     
     try:
-        db.commit()
-        db.refresh(db_task)
+        await db.commit()
+        await db.refresh(db_task)
     except Exception as e:
-        db.rollback()
+        await db.rollback()
         raise HTTPException(
             status_code=400,
             detail=f"Failed to update task status: {str(e)}"

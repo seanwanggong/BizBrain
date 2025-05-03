@@ -1,25 +1,24 @@
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, ForeignKey, Text, Boolean
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import Column, String, DateTime, ForeignKey, JSON, text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from app.db.base_class import Base
+from sqlalchemy.sql import func
 import uuid
+from app.db.base_class import Base
 
 class Workflow(Base):
+    """工作流模型"""
     __tablename__ = "workflows"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-    name = Column(String(100), index=True)
-    description = Column(Text, nullable=True)
-    config = Column(JSONB, nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # 外键关联
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
-    
-    # 关联 - 使用字符串引用避免循环导入
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text('gen_random_uuid()'))
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    config = Column(JSON, nullable=False, default=dict)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # 关系定义
     user = relationship("User", back_populates="workflows")
-    tasks = relationship("WorkflowTask", back_populates="workflow", cascade="all, delete-orphan")
-    executions = relationship("WorkflowExecution", back_populates="workflow", cascade="all, delete-orphan") 
+    tasks = relationship("WorkflowTask", back_populates="workflow", lazy="selectin")
+    executions = relationship("WorkflowExecution", back_populates="workflow", lazy="selectin")

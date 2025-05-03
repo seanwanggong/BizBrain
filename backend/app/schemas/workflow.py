@@ -1,15 +1,16 @@
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel
+from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, Field
 from datetime import datetime
 from uuid import UUID
 from .workflow_task import WorkflowTaskResponse
+from app.schemas.execution import ExecutionResponse
 
 
 class WorkflowBase(BaseModel):
     """工作流基础模型"""
     name: str
     description: Optional[str] = None
-    config: Optional[Dict[str, Any]] = None
+    config: Dict[str, Any] = Field(default_factory=dict)
 
 
 class WorkflowCreate(WorkflowBase):
@@ -27,10 +28,11 @@ class WorkflowUpdate(WorkflowBase):
 class WorkflowResponse(WorkflowBase):
     """工作流响应模型"""
     id: UUID
-    tasks: List[WorkflowTaskResponse]
+    user_id: UUID
     created_at: datetime
     updated_at: Optional[datetime] = None
-    is_active: bool = True
+    tasks: List[WorkflowTaskResponse] = Field(default_factory=list)
+    executions: List[ExecutionResponse] = Field(default_factory=list)
 
     class Config:
         from_attributes = True

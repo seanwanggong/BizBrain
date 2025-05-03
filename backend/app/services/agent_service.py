@@ -1,5 +1,6 @@
 from typing import List, Optional, Dict, Any
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from ..models.agent import Agent
 from ..schemas.agent import AgentCreate, AgentUpdate
 from langchain.agents import AgentExecutor
@@ -23,7 +24,6 @@ import base64
 import io
 import matplotlib.pyplot as plt
 from sqlalchemy.sql import text
-from sqlalchemy.orm import Session
 from langchain.agents import Tool, AgentExecutor, LLMSingleActionAgent
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import StringPromptTemplate
@@ -33,16 +33,20 @@ from fastapi import HTTPException, status
 import concurrent.futures
 import uuid
 from ..models.execution_log import ExecutionLog
+from ..core.config import settings
 
 class AgentService:
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
-        self.openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
-    def create_agent(self, agent: AgentCreate, creator_id: str) -> Agent:
+    async def create_agent(self, agent: AgentCreate, creator_id: str) -> Agent:
         try:
             # 检查是否已存在同名agent
-            existing_agent = self.db.query(Agent).filter(Agent.name == agent.name).first()
+            stmt = select(Agent).where(Agent.name == agent.name)
+            result = await self.db.execute(stmt)
+            existing_agent = result.scalar_one_or_none()
+            
             if existing_agent:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -58,10 +62,10 @@ class AgentService:
             agent_data = {
                 'name': agent.name,
                 'description': agent.description,
-                'agent_type': agent.type,  # 使用 agent_type 而不是 type
+                'agent_type': agent.agent_type,
                 'config': agent.config,
                 'is_active': agent.is_active,
-                'creator_id': creator_id  # 添加 creator_id
+                'creator_id': creator_id
             }
             print(f"Prepared agent data: {agent_data}")
             
@@ -76,9 +80,9 @@ class AgentService:
             print("Adding agent to database...")
             self.db.add(db_agent)
             print("Committing changes...")
-            self.db.commit()
+            await self.db.commit()
             print("Refreshing agent...")
-            self.db.refresh(db_agent)
+            await self.db.refresh(db_agent)
             print(f"Final agent state: {db_agent.__dict__}")
             
             # 返回创建好的 agent
@@ -91,26 +95,27 @@ class AgentService:
             print(f"Error args: {e.args}")
             print(f"Agent data: {agent.model_dump()}")
             print(f"Agent type: {type(agent)}")
-            self.db.rollback()
+            await self.db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Failed to create agent: {str(e)}"
             )
 
-    def get_agent(self, agent_id: int) -> Optional[Agent]:
-        agent = self.db.query(Agent).filter(Agent.id == agent_id).first()
-        if agent:
-            return agent
-        return None
+    async def get_agent(self, agent_id: int) -> Optional[Agent]:
+        stmt = select(Agent).where(Agent.id == agent_id)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
 
-    def get_agents(self, skip: int = 0, limit: int = 100, creator_id: str = None) -> List[Agent]:
-        query = self.db.query(Agent)
+    async def get_agents(self, skip: int = 0, limit: int = 100, creator_id: str = None) -> List[Agent]:
+        stmt = select(Agent)
         if creator_id:
-            query = query.filter(Agent.creator_id == creator_id)
-        return query.offset(skip).limit(limit).all()
+            stmt = stmt.where(Agent.creator_id == creator_id)
+        stmt = stmt.offset(skip).limit(limit)
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
 
-    def update_agent(self, agent_id: int, agent: AgentUpdate) -> Optional[Agent]:
-        db_agent = self.get_agent(agent_id)
+    async def update_agent(self, agent_id: int, agent: AgentUpdate) -> Optional[Agent]:
+        db_agent = await self.get_agent(agent_id)
         if not db_agent:
             return None
         
@@ -118,17 +123,17 @@ class AgentService:
         for key, value in update_data.items():
             setattr(db_agent, key, value)
         
-        self.db.commit()
-        self.db.refresh(db_agent)
+        await self.db.commit()
+        await self.db.refresh(db_agent)
         return db_agent
 
-    def delete_agent(self, agent_id: int) -> bool:
-        db_agent = self.get_agent(agent_id)
+    async def delete_agent(self, agent_id: int) -> bool:
+        db_agent = await self.get_agent(agent_id)
         if not db_agent:
             return False
         
-        self.db.delete(db_agent)
-        self.db.commit()
+        await self.db.delete(db_agent)
+        await self.db.commit()
         return True
 
     def create_agent_executor(self, agent: Agent) -> AgentExecutor:
@@ -140,7 +145,7 @@ class AgentService:
         llm = ChatOpenAI(
             temperature=config.get("temperature", 0),
             model_name=config.get("model", "gpt-3.5-turbo"),
-            openai_api_key=os.getenv("OPENAI_API_KEY")
+            openai_api_key=settings.OPENAI_API_KEY
         )
         
         # 创建记忆组件
@@ -188,9 +193,9 @@ class AgentService:
             pass
         return None
 
-    def execute_agent(self, agent_id: int, input_text: str) -> Dict[str, Any]:
+    async def execute_agent(self, agent_id: int, input_text: str) -> Dict[str, Any]:
         """执行Agent"""
-        agent = self.get_agent(agent_id)
+        agent = await self.get_agent(agent_id)
         if not agent:
             raise ValueError("Agent not found")
         
@@ -219,7 +224,7 @@ class AgentService:
             execution_time = time.time() - start_time
             
             # 记录执行历史
-            self.log_execution(
+            await self.log_execution(
                 agent_id=agent_id,
                 input_text=input_text,
                 output=result["output"],
@@ -239,10 +244,10 @@ class AgentService:
             error_strategy = agent.config.get("errorStrategy", "fail")
             if error_strategy == "retry":
                 # 实现重试逻辑
-                return self._retry_execution(agent, input_text)
+                return await self._retry_execution(agent, input_text)
             elif error_strategy == "ignore":
                 # 返回部分结果
-                return self._handle_partial_result(e)
+                return await self._handle_partial_result(e)
             else:
                 raise ValueError(f"Error executing agent: {str(e)}")
 
@@ -255,18 +260,18 @@ class AgentService:
             "execution_id": str(uuid.uuid4())
         }
 
-    def _retry_execution(self, agent: Agent, input_text: str, max_retries: int = 3) -> Dict[str, Any]:
+    async def _retry_execution(self, agent: Agent, input_text: str, max_retries: int = 3) -> Dict[str, Any]:
         """重试执行"""
         last_error = None
         for attempt in range(max_retries):
             try:
-                return self.execute_agent(agent.id, input_text)
+                return await self.execute_agent(agent.id, input_text)
             except Exception as e:
                 last_error = e
                 time.sleep(2 ** attempt)  # 指数退避
         raise ValueError(f"Failed after {max_retries} retries: {str(last_error)}")
 
-    def _handle_partial_result(self, error: Exception) -> Dict[str, Any]:
+    async def _handle_partial_result(self, error: Exception) -> Dict[str, Any]:
         """处理部分结果"""
         return {
             "output": "Execution partially completed with errors",
@@ -275,8 +280,8 @@ class AgentService:
             "error": str(error)
         }
 
-    def log_execution(self, agent_id: int, input_text: str, output: str, steps: List[dict], 
-                     execution_time: float, context: Dict[str, Any]):
+    async def log_execution(self, agent_id: int, input_text: str, output: str, steps: List[dict], 
+                          execution_time: float, context: Dict[str, Any]):
         """记录执行历史"""
         execution_log = {
             "agent_id": agent_id,
@@ -298,7 +303,7 @@ class AgentService:
             context=context
         )
         self.db.add(log)
-        self.db.commit()
+        await self.db.commit()
         
         return log
 
@@ -482,15 +487,15 @@ class AgentService:
         )
 
         # 添加数据库查询工具
-        def execute_sql_query(query: str) -> str:
+        async def execute_sql_query(query: str) -> str:
             try:
                 # Use the existing database session
-                result = self.db.execute(text(query))
+                result = await self.db.execute(text(query))
                 if query.strip().upper().startswith('SELECT'):
                     results = [dict(row) for row in result]
                     return json.dumps(results)
                 else:
-                    self.db.commit()
+                    await self.db.commit()
                     return "Query executed successfully"
             except Exception as e:
                 return f"Error executing SQL query: {str(e)}"

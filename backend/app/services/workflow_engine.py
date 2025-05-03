@@ -1,10 +1,11 @@
 from typing import Dict, Any, List
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from ..models.workflow import Workflow
 from ..models.workflow_execution import WorkflowExecution, ExecutionStatus
 from ..models.workflow_task import WorkflowTask, TaskType, TaskStatus
 from ..schemas.workflow import WorkflowCreate, WorkflowUpdate
-from ..core.database import SessionLocal
+from ..core.database import AsyncSessionLocal
 from ..core.config import settings
 from .llm_service import LLMService
 from .task_executors import get_task_executor
@@ -16,7 +17,7 @@ from uuid import UUID
 
 
 class WorkflowEngine:
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
         self.llm_service = LLMService()
     
@@ -30,17 +31,22 @@ class WorkflowEngine:
             started_at=datetime.utcnow()
         )
         self.db.add(execution)
-        self.db.commit()
-        self.db.refresh(execution)
+        await self.db.commit()
+        await self.db.refresh(execution)
         
         try:
             # 获取工作流及其任务
-            workflow = self.db.query(Workflow).filter(Workflow.id == workflow_id).first()
+            stmt = select(Workflow).where(Workflow.id == workflow_id)
+            result = await self.db.execute(stmt)
+            workflow = result.scalar_one_or_none()
+            
             if not workflow:
                 raise ValueError("Workflow not found")
             
             # 获取所有任务
-            tasks = self.db.query(WorkflowTask).filter(WorkflowTask.workflow_id == workflow_id).all()
+            stmt = select(WorkflowTask).where(WorkflowTask.workflow_id == workflow_id)
+            result = await self.db.execute(stmt)
+            tasks = result.scalars().all()
             
             # 构建任务依赖图
             task_graph = self._build_task_graph(tasks)
@@ -58,7 +64,7 @@ class WorkflowEngine:
             execution.error_message = str(e)
             execution.completed_at = datetime.utcnow()
         
-        self.db.commit()
+        await self.db.commit()
         return execution
     
     def _build_task_graph(self, tasks: List[WorkflowTask]) -> Dict[int, List[int]]:
@@ -83,7 +89,10 @@ class WorkflowEngine:
                 return
             
             # 获取任务
-            task = self.db.query(WorkflowTask).filter(WorkflowTask.id == task_id).first()
+            stmt = select(WorkflowTask).where(WorkflowTask.id == task_id)
+            result = await self.db.execute(stmt)
+            task = result.scalar_one_or_none()
+            
             if not task:
                 raise ValueError(f"Task {task_id} not found")
             

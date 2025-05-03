@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import AgentForm from '../../../components/AgentForm';
 import { getAgent, updateAgent } from '@/utils/api';
-import { Agent } from '@/types/agent';
+import { Agent, AgentType } from '@/types/agent';
 
 const EditAgentPage: React.FC = () => {
   const router = useRouter();
@@ -49,7 +49,9 @@ const EditAgentPage: React.FC = () => {
         is_active: true
       });
       message.success('Agent更新成功');
-      router.push('/agents');
+      router.replace('/agents/').then(() => {
+        window.location.reload();
+      });
     } catch (error) {
       message.error('更新Agent失败');
     } finally {
@@ -58,7 +60,9 @@ const EditAgentPage: React.FC = () => {
   };
 
   const handleCancel = () => {
-    router.push('/agents');
+    router.replace('/agents/').then(() => {
+      window.location.reload();
+    });
   };
 
   if (loading) {
@@ -81,7 +85,7 @@ const EditAgentPage: React.FC = () => {
   const initialValues = {
     name: agent.name,
     description: agent.description,
-    type: agent.agent_type,
+    type: agent.agent_type as AgentType,
     config: {
       model: agent.config.model,
       systemPrompt: agent.config.systemPrompt,

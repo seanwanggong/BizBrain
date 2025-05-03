@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from uuid import UUID
 from typing import Optional
 from datetime import datetime
@@ -10,6 +10,13 @@ class UserBase(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={
+            datetime: lambda v: v.isoformat() if v else None
+        }
+    )
 
 class TokenPayload(BaseModel):
     sub: Optional[UUID] = None
@@ -25,5 +32,9 @@ class UserResponse(UserBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True 
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={
+            datetime: lambda v: v.isoformat() if v else None
+        }
+    ) 

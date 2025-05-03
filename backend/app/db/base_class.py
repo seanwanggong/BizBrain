@@ -1,7 +1,7 @@
 from typing import Any
-from sqlalchemy.ext.declarative import as_declarative, declared_attr
+from sqlalchemy.ext.asyncio import AsyncAttrs
+from sqlalchemy.orm import DeclarativeBase, declared_attr
 from sqlalchemy import MetaData
-from sqlalchemy.dialects import postgresql
 
 # PostgreSQL-specific naming convention for constraints
 convention = {
@@ -14,22 +14,14 @@ convention = {
 
 metadata = MetaData(naming_convention=convention)
 
-@as_declarative(metadata=metadata)
-class Base:
+class Base(AsyncAttrs, DeclarativeBase):
+    """Base class for all database models."""
+    metadata = metadata
+
     id: Any
     __name__: str
 
     # Generate __tablename__ automatically
     @declared_attr
     def __tablename__(cls) -> str:
-        return cls.__name__.lower()
-
-def init_models():
-    """确保所有模型都被正确加载"""
-    from app.models.workflow import Workflow
-    from app.models.workflow_task import WorkflowTask
-    from app.models.workflow_execution import WorkflowExecution
-    from app.models.task_log import TaskLog
-    from app.models.execution_log import ExecutionLog
-    from app.models.user import User 
-    from app.models.agent import Agent
+        return cls.__name__.lower() 

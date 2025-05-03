@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, JSON, ForeignKey, DateTim
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
-from ..db.base_class import Base
+from app.db.base_class import Base
 
 class ExecutionLog(Base):
     __tablename__ = "execution_logs"

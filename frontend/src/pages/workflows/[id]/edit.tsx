@@ -75,7 +75,11 @@ const EditWorkflowPage: React.FC = () => {
             id: node.id,
             type: node.data.type,
             name: node.data.label,
-            config: node.data.config || {},
+            description: node.data.description || '',
+            config: {
+              ...node.data.config,
+              description: node.data.description || '',
+            },
             position: node.position,
           })),
           edges: currentData.edges.map(edge => ({

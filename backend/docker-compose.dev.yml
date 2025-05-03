@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   app:
     build: .
@@ -12,13 +14,13 @@ services:
       - postgres_db
       - secret_key
       - openai_api_key
+    volumes:
+      - ./app:/app/app
     networks:
       - bizbrain-network
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
-    depends_on:
-      - redis
     deploy:
       resources:
         limits:
